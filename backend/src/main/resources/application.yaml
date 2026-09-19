@@ -1,0 +1,16 @@
+spring:
+  application:
+    name: duoc-connect-backend
+
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/duoc_connect}
+    username: ${SPRING_DATASOURCE_USERNAME:duoc}
+    password: ${SPRING_DATASOURCE_PASSWORD:duoc_secret}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+
+  flyway:
+    enabled: true
