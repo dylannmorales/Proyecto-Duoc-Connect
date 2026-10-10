@@ -1,0 +1,17 @@
+package cl.duoc.connect.application.dto.response;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+
+import java.util.UUID;
+
+@Getter
+@Builder
+@AllArgsConstructor
+public class SedeResponse {
+
+    private final UUID id;
+    private final String nombre;
+    private final String ciudad;
+}
