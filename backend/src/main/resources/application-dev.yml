@@ -1,0 +1,9 @@
+logging:
+  level:
+    cl.duoc.connect: DEBUG
+    org.springframework.security: INFO
+    org.hibernate.SQL: DEBUG
+
+spring:
+  jpa:
+    show-sql: true
