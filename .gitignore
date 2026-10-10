@@ -1,5 +1,28 @@
-.env
+# IDE
 .idea/
 .vscode/
+*.iml
+*.swp
+*.swo
+
+# OS
 .DS_Store
 Thumbs.db
+
+# Backend
+backend/target/
+backend/.mvn/wrapper/maven-wrapper.jar
+backend/!.mvn/wrapper/maven-wrapper.jar
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+frontend/.env.local
+
+# Uploads & logs
+uploads/
+*.log
+
+# Docker
+.env
