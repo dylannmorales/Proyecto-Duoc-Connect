@@ -5,6 +5,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -14,6 +15,14 @@ import java.util.UUID;
 public interface GrupoEstudioJpaRepository extends JpaRepository<GrupoEstudioEntity, UUID> {
 
     boolean existsByCodigoInvitacion(String codigoInvitacion);
+
+    /**
+     * Borrado directo en BD: miembros y mensajes se eliminan por ON DELETE CASCADE. Se usa en vez de
+     * deleteById porque Hibernate cancela en silencio el borrado si una membresía cargada aún referencia al grupo.
+     */
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("DELETE FROM GrupoEstudioEntity g WHERE g.id = :id")
+    int eliminarGrupo(@Param("id") UUID id);
 
     @EntityGraph(attributePaths = {"carrera", "creador", "asignatura"})
     Optional<GrupoEstudioEntity> findByCodigoInvitacionIgnoreCase(String codigoInvitacion);

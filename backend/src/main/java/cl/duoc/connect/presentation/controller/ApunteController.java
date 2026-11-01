@@ -1,6 +1,8 @@
 package cl.duoc.connect.presentation.controller;
 
+import cl.duoc.connect.application.dto.request.ValorarApunteRequest;
 import cl.duoc.connect.application.dto.response.ApiResponse;
+import cl.duoc.connect.application.dto.response.ApunteDescarga;
 import cl.duoc.connect.application.dto.response.ApunteResponse;
 import cl.duoc.connect.application.dto.response.PageResponse;
 import cl.duoc.connect.application.service.ApunteService;
@@ -12,11 +14,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ContentDisposition;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -24,6 +28,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
 @RestController
@@ -64,5 +69,26 @@ public class ApunteController {
     @Operation(summary = "Obtener detalle de un apunte")
     public ApiResponse<ApunteResponse> obtenerApunte(@PathVariable UUID id) {
         return ApiResponse.ok(apunteService.obtenerApunte(id));
+    }
+
+    @GetMapping("/{id}/descargar")
+    @Operation(summary = "Descargar el PDF de un apunte")
+    public ResponseEntity<Resource> descargarApunte(@PathVariable UUID id) {
+        ApunteDescarga descarga = apunteService.descargarApunte(id);
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.attachment()
+                        .filename(descarga.nombreArchivo(), StandardCharsets.UTF_8)
+                        .build()
+                        .toString())
+                .body(descarga.resource());
+    }
+
+    @PutMapping("/{id}/valoracion")
+    @Operation(summary = "Valorar un apunte (1 a 5)")
+    public ApiResponse<ApunteResponse> valorarApunte(
+            @PathVariable UUID id,
+            @Valid @RequestBody ValorarApunteRequest request) {
+        return ApiResponse.ok(apunteService.valorarApunte(id, request.getPuntuacion()), "Valoración guardada");
     }
 }

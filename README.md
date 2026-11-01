@@ -1,6 +1,6 @@
 # Duoc Connect
 
-Plataforma web para estudiantes de Duoc UC. Esta versión llega hasta el **Sprint 5**:
+Plataforma web para estudiantes de Duoc UC. Esta versión llega hasta el **Sprint 7**:
 
 | Sprint | Alcance | Estado |
 |--------|---------|--------|
@@ -9,7 +9,20 @@ Plataforma web para estudiantes de Duoc UC. Esta versión llega hasta el **Sprin
 | 3 | Gestionar usuarios y roles (administrador) | Incluido |
 | 4 | Unirse a grupos y chat en tiempo real | Incluido |
 | 5 | Notificaciones y subir apuntes | Incluido |
-| 6 en adelante | Descargar y valorar apuntes, foro, buscar compañeros, moderación, panel de administración completo | Pendiente |
+| 6 | Buscar, descargar y valorar apuntes (HU-10) | Incluido |
+| 7 | Foro: publicar preguntas con imagen opcional (HU-11); responder, votar y aceptar solución (HU-12) | Incluido |
+| — | Historias adicionales: compartir apuntes por vínculo (HU-18), editar grupo (HU-19), invitar al grupo por correo (HU-20) | Incluido |
+| 8 en adelante | Buscar compañeros, moderación, panel de administración completo | Pendiente |
+
+### Historias de usuario adicionales
+
+Surgieron después del backlog de Fase 1 (que llega hasta HU-17) y continúan su numeración y formato.
+
+| ID | Rol | Funcionalidad | Criterio de aceptación |
+|----|-----|---------------|------------------------|
+| HU-18 | Estudiante | Compartir un apunte mediante un vínculo que aparece en un modal | Desde la tarjeta o el detalle del apunte, "Compartir" abre un modal con el vínculo `/apuntes/{id}`, el botón "Copiar vínculo" y la opción de enviarlo por Gmail. Quien abre el vínculo con sesión iniciada ve el apunte y puede descargarlo y valorarlo; sin sesión se le pide iniciarla y luego vuelve al apunte. |
+| HU-19 | Administrador del grupo | Editar el grupo de estudio | Solo el administrador del grupo ve "Editar grupo" y puede cambiar nombre, descripción, carrera, asignatura, cupo y privacidad. El cupo no puede quedar bajo la cantidad de integrantes actuales y la asignatura debe ser de la carrera elegida. Un miembro sin ese rol recibe 403. |
+| HU-20 | Miembro del grupo | Compartir el grupo mediante una invitación por correo | "Compartir" abre un modal donde se agregan correos `@duocuc.cl`, se ven las personas con acceso (nombre, correo y rol) y "Copiar vínculo". Cada invitado recibe un correo con el vínculo `/grupos/unirse/{código}`; si ya tiene cuenta, también una notificación. Los correos no institucionales se rechazan y los que ya son miembros se omiten, informando el resultado de cada uno. |
 
 ## Stack
 
@@ -112,8 +125,12 @@ Abre http://localhost:5173.
 | `/recuperar-contrasena` | Invitado | Definir nueva contraseña |
 | `/perfil` | Autenticado | Ver y editar perfil, subir foto |
 | `/grupos` | Autenticado | Listar, crear y unirse a grupos (también por código) |
-| `/grupos/:id` | Autenticado | Detalle del grupo, miembros y chat en tiempo real |
-| `/apuntes` | Autenticado | Listar, filtrar y subir apuntes en PDF |
+| `/grupos/:id` | Autenticado | Detalle del grupo, miembros y chat en tiempo real; compartir/invitar y editar (administrador) |
+| `/grupos/unirse/:codigo` | Autenticado | Vínculo de invitación: muestra el grupo y permite unirse |
+| `/apuntes` | Autenticado | Listar, filtrar, subir, descargar, valorar y compartir apuntes en PDF |
+| `/apuntes/:id` | Autenticado | Vínculo compartido de un apunte: detalle, descarga y valoración |
+| `/foro` | Autenticado | Listar y filtrar preguntas, hacer una pregunta |
+| `/foro/:id` | Autenticado | Detalle: responder, votar y aceptar solución |
 | `/admin` | Administrador | Resumen, usuarios y roles |
 
 La campana de notificaciones aparece en la barra superior cuando hay sesión iniciada.
@@ -139,13 +156,23 @@ Base: `/api/v1`
 | GET / POST | `/grupos` | Listar (con filtros) / crear grupo |
 | GET | `/grupos/{id}`, `/grupos/codigo/{codigo}` | Detalle / buscar por código |
 | POST | `/grupos/{id}/unirse`, `/grupos/unirse-por-codigo` | Unirse (el `POST` requiere `Content-Type: application/json`) |
-| DELETE | `/grupos/{id}/salir` | Salir del grupo |
-| GET | `/grupos/{id}/miembros` | Miembros |
+| DELETE | `/grupos/{id}/salir` | Salir del grupo. Si sale el administrador, la administración pasa al integrante más antiguo; si sale el último integrante, el grupo se elimina con su chat. Devuelve `grupoEliminado` y `nuevoAdministrador` |
+| PUT | `/grupos/{id}` | Editar grupo (solo administrador del grupo) |
+| POST | `/grupos/{id}/invitaciones` | Invitar por correo: `{ "emails": [...] }` (hasta 20, solo `@duocuc.cl`; devuelve el resultado por correo) |
+| GET | `/grupos/{id}/miembros` | Miembros (con su correo) |
 | GET / POST | `/grupos/{id}/mensajes` | Historial / enviar mensaje |
 | GET | `/notificaciones`, `/notificaciones/no-leidas` | Notificaciones y contador |
 | PATCH | `/notificaciones/{id}/leida`, `/notificaciones/leer-todas` | Marcar como leídas |
 | GET | `/apuntes`, `/apuntes/{id}` | Listar con filtros / detalle |
 | POST | `/apuntes` | Subir apunte (multipart, PDF de hasta 10 MB) |
+| GET | `/apuntes/{id}/descargar` | Descargar el PDF (suma una descarga) |
+| PUT | `/apuntes/{id}/valoracion` | Valorar de 1 a 5 (no el propio; se puede cambiar) |
+| GET | `/foro/preguntas` | Listar con filtros: `carreraId`, `asignaturaId`, `q`, `estado` (`TODAS`, `ABIERTAS`, `RESUELTAS`), `orden` (`recientes`, `votos`) |
+| POST | `/foro/preguntas` | Publicar pregunta (multipart: `titulo`, `contenido`, `carreraId`, `asignaturaId` o `tematicaGeneral=true`, `imagen` opcional JPG/PNG/WebP de hasta 2 MB) |
+| GET | `/foro/preguntas/{id}` | Detalle con respuestas |
+| POST | `/foro/preguntas/{id}/respuestas` | Responder (notifica al autor) |
+| POST | `/foro/preguntas/{id}/votos`, `/foro/respuestas/{id}/votos` | Votar / quitar voto (no el propio) |
+| POST | `/foro/respuestas/{id}/aceptar` | Aceptar o quitar la solución (solo el autor de la pregunta) |
 | GET | `/admin/stats`, `/admin/usuarios` | Solo administrador: estadísticas y usuarios |
 | PATCH | `/admin/usuarios/{id}/rol`, `/admin/usuarios/{id}/estado` | Solo administrador: cambiar rol y activar o desactivar |
 
@@ -161,7 +188,7 @@ STOMP sobre SockJS. El JWT se envía en el header `Authorization` al conectar y 
 | Suscribirse | `/topic/grupos/{grupoId}` |
 | Enviar mensaje | `/app/grupos/{grupoId}/mensajes` |
 
-El correo de recuperación de contraseña no se envía: en desarrollo el enlace se imprime en la consola del backend.
+Los correos (recuperación de contraseña e invitaciones a grupos) no se envían todavía: en desarrollo se imprimen en la consola del backend con su enlace. Para entregarlos de verdad hay que implementar `EmailPort` con un servidor SMTP.
 
 ## Usuario administrador (demo)
 
@@ -255,7 +282,7 @@ duoc-connect/
 ├── frontend/           # SPA React
 │   └── src/
 │       ├── app/             # rutas y providers
-│       ├── features/        # auth, profile, home, groups, notes, notifications, admin
+│       ├── features/        # auth, profile, home, groups, notes, forum, notifications, admin
 │       └── shared/          # layout, hooks, utilidades
 ├── docker-compose.yml
 └── README.md
@@ -266,7 +293,7 @@ duoc-connect/
 | Comando | Dónde | Qué hace |
 |---------|-------|----------|
 | `mvn spring-boot:run` | `backend/` | Inicia la API |
-| `mvn test` | `backend/` | Ejecuta los tests |
+| `mvn test` | `backend/` | Ejecuta los tests (incluye pruebas unitarias de HU-10, HU-11, HU-12, HU-19, HU-20 y salir del grupo) |
 | `mvn -DskipTests package` | `backend/` | Genera el JAR |
 | `npm run dev` | `frontend/` | Servidor de desarrollo |
 | `npm run build` | `frontend/` | Chequea tipos y compila |

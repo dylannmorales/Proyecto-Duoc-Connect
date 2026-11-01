@@ -29,7 +29,7 @@ public class GlobalExceptionHandler {
                     HttpStatus.BAD_REQUEST;
             case "FILE_NOT_FOUND" -> HttpStatus.NOT_FOUND;
             case "INVALID_TOKEN", "TOKEN_EXPIRED", "USER_INACTIVE" -> HttpStatus.UNAUTHORIZED;
-            case "FORBIDDEN", "NOT_MEMBER", "INVALID_CODE" -> HttpStatus.FORBIDDEN;
+            case "FORBIDDEN", "NOT_MEMBER", "INVALID_CODE", "GROUP_ADMIN_REQUIRED" -> HttpStatus.FORBIDDEN;
             case "CARRERA_NOT_FOUND", "SEDE_NOT_FOUND", "USER_NOT_FOUND", "ASIGNATURA_NOT_FOUND",
                     "HABILIDAD_NOT_FOUND" ->
                     HttpStatus.NOT_FOUND;

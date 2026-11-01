@@ -15,4 +15,15 @@ public class ConsoleEmailAdapter implements EmailPort {
         log.info("Enlace: {}", resetLink);
         log.info("===================================");
     }
+
+    @Override
+    public void sendGroupInvitationEmail(
+            String to, String grupoNombre, String invitadorNombre, String invitationLink, String codigo) {
+        log.info("=== EMAIL DE INVITACIÓN A GRUPO (DEV) ===");
+        log.info("Para: {}", to);
+        log.info("Asunto: {} te invitó al grupo \"{}\" - Duoc Connect", invitadorNombre, grupoNombre);
+        log.info("Enlace: {}", invitationLink);
+        log.info("Código de invitación: {}", codigo);
+        log.info("=========================================");
+    }
 }
