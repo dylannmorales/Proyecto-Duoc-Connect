@@ -9,6 +9,8 @@ public interface FileStoragePort {
 
     String storeApuntePdf(MultipartFile file);
 
+    String storeForoImage(MultipartFile file);
+
     Resource loadAsResource(String fileUrl);
 
     void deleteStoredFile(String fileUrl);

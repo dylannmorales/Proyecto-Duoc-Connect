@@ -87,6 +87,28 @@ public class NotificacionService {
         notificacionRepository.save(notificacion);
     }
 
+    @Transactional
+    public void notificarRespuestaForo(UsuarioEntity destinatario, String preguntaTitulo, String autorNombre, UUID preguntaId) {
+        NotificacionEntity notificacion = new NotificacionEntity();
+        notificacion.setUsuario(destinatario);
+        notificacion.setTipo(TipoNotificacion.RESPUESTA_FORO);
+        notificacion.setTitulo("Nueva respuesta en el foro");
+        notificacion.setMensaje(autorNombre + " respondió tu pregunta: " + preguntaTitulo);
+        notificacion.setEnlace("/foro/" + preguntaId);
+        notificacionRepository.save(notificacion);
+    }
+
+    @Transactional
+    public void notificarInvitacionGrupo(UsuarioEntity destinatario, String grupoNombre, String invitadorNombre, String codigo) {
+        NotificacionEntity notificacion = new NotificacionEntity();
+        notificacion.setUsuario(destinatario);
+        notificacion.setTipo(TipoNotificacion.INVITACION_GRUPO);
+        notificacion.setTitulo("Invitación a " + grupoNombre);
+        notificacion.setMensaje(invitadorNombre + " te invitó a unirte al grupo de estudio.");
+        notificacion.setEnlace("/grupos/unirse/" + codigo);
+        notificacionRepository.save(notificacion);
+    }
+
     private NotificacionResponse toResponse(NotificacionEntity entity) {
         return NotificacionResponse.builder()
                 .id(entity.getId())

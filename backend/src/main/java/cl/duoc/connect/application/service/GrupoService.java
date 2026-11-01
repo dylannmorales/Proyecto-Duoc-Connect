@@ -3,11 +3,15 @@ package cl.duoc.connect.application.service;
 import cl.duoc.connect.application.dto.request.CreateGrupoRequest;
 import cl.duoc.connect.application.dto.request.EnviarMensajeRequest;
 import cl.duoc.connect.application.dto.request.UnirseGrupoRequest;
+import cl.duoc.connect.application.dto.request.UpdateGrupoRequest;
 import cl.duoc.connect.application.dto.response.GrupoResponse;
+import cl.duoc.connect.application.dto.response.InvitacionResponse;
 import cl.duoc.connect.application.dto.response.MensajeGrupoResponse;
 import cl.duoc.connect.application.dto.response.MiembroGrupoResponse;
 import cl.duoc.connect.application.dto.response.PageResponse;
+import cl.duoc.connect.application.dto.response.SalidaGrupoResponse;
 import cl.duoc.connect.application.mapper.GrupoMapper;
+import cl.duoc.connect.application.port.out.EmailPort;
 import cl.duoc.connect.domain.enums.RolGrupo;
 import cl.duoc.connect.domain.exception.BusinessException;
 import cl.duoc.connect.domain.exception.EntityNotFoundException;
@@ -26,6 +30,7 @@ import cl.duoc.connect.infrastructure.persistence.repository.MensajeGrupoJpaRepo
 import cl.duoc.connect.infrastructure.persistence.repository.UsuarioJpaRepository;
 import cl.duoc.connect.infrastructure.security.UserPrincipal;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -37,8 +42,14 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.security.SecureRandom;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 @Service
 @RequiredArgsConstructor
@@ -46,6 +57,7 @@ public class GrupoService {
 
     private static final String CODIGO_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
     private static final SecureRandom RANDOM = new SecureRandom();
+    private static final Pattern CORREO_INSTITUCIONAL = Pattern.compile("^[^@\\s]+@duocuc\\.cl$");
 
     private final GrupoEstudioJpaRepository grupoRepository;
     private final GrupoMiembroJpaRepository miembroRepository;
@@ -56,6 +68,10 @@ public class GrupoService {
     private final GrupoMapper grupoMapper;
     private final SimpMessagingTemplate messagingTemplate;
     private final NotificacionService notificacionService;
+    private final EmailPort emailPort;
+
+    @Value("${app.frontend-url:http://localhost:5173}")
+    private String frontendUrl;
 
     @Transactional
     public GrupoResponse crearGrupo(CreateGrupoRequest request) {
@@ -165,7 +181,87 @@ public class GrupoService {
     }
 
     @Transactional
-    public void salirGrupo(UUID grupoId) {
+    public GrupoResponse editarGrupo(UUID grupoId, UpdateGrupoRequest request) {
+        UUID usuarioId = getCurrentUserId();
+        GrupoEstudioEntity grupo = findGrupoWithDetails(grupoId);
+        validarAdminGrupo(grupoId, usuarioId);
+
+        CarreraEntity carrera = carreraRepository.findById(request.getCarreraId())
+                .orElseThrow(() -> new BusinessException("CARRERA_NOT_FOUND", "Carrera no encontrada"));
+
+        AsignaturaEntity asignatura = null;
+        if (request.getAsignaturaId() != null) {
+            asignatura = asignaturaRepository.findByIdWithCarrera(request.getAsignaturaId())
+                    .orElseThrow(() -> new BusinessException("ASIGNATURA_NOT_FOUND", "Asignatura no encontrada"));
+            if (!asignatura.getCarrera().getId().equals(carrera.getId())) {
+                throw new BusinessException("ASIGNATURA_INVALID", "La asignatura no pertenece a la carrera seleccionada");
+            }
+        }
+
+        long miembros = miembroRepository.countByGrupoId(grupoId);
+        if (request.getMaxMiembros() < miembros) {
+            throw new BusinessException("MAX_MIEMBROS_INVALID",
+                    "El máximo no puede ser menor que los " + miembros + " integrantes actuales");
+        }
+
+        grupo.setNombre(request.getNombre().trim());
+        grupo.setDescripcion(StringUtils.hasText(request.getDescripcion()) ? request.getDescripcion().trim() : null);
+        grupo.setCarrera(carrera);
+        grupo.setAsignatura(asignatura);
+        grupo.setMaxMiembros(request.getMaxMiembros());
+        grupo.setPrivado(request.getPrivado());
+        grupoRepository.save(grupo);
+
+        return toGrupoResponse(grupo, usuarioId);
+    }
+
+    /**
+     * Envía la invitación por correo con el vínculo para unirse. Si el correo pertenece a un usuario
+     * registrado, además recibe una notificación in-app.
+     */
+    @Transactional
+    public List<InvitacionResponse> invitarPorCorreo(UUID grupoId, List<String> emails) {
+        UsuarioEntity invitador = getCurrentUsuario();
+        GrupoEstudioEntity grupo = findGrupoWithDetails(grupoId);
+        validarMembresia(grupoId, invitador.getId());
+
+        String link = frontendUrl + "/grupos/unirse/" + grupo.getCodigoInvitacion();
+        Set<String> procesados = new LinkedHashSet<>();
+        for (String email : emails) {
+            if (email != null && StringUtils.hasText(email)) {
+                procesados.add(email.trim().toLowerCase(Locale.ROOT));
+            }
+        }
+
+        List<InvitacionResponse> resultados = new ArrayList<>();
+        for (String email : procesados) {
+            if (!CORREO_INSTITUCIONAL.matcher(email).matches()) {
+                resultados.add(InvitacionResponse.invalido(email));
+                continue;
+            }
+
+            Optional<UsuarioEntity> registrado = usuarioRepository.findByEmailIgnoreCase(email);
+            if (registrado.isPresent()
+                    && miembroRepository.existsByGrupoIdAndUsuarioId(grupoId, registrado.get().getId())) {
+                resultados.add(InvitacionResponse.yaEsMiembro(email));
+                continue;
+            }
+
+            emailPort.sendGroupInvitationEmail(
+                    email, grupo.getNombre(), invitador.getNombre(), link, grupo.getCodigoInvitacion());
+            registrado.ifPresent(usuario -> notificacionService.notificarInvitacionGrupo(
+                    usuario, grupo.getNombre(), invitador.getNombre(), grupo.getCodigoInvitacion()));
+            resultados.add(InvitacionResponse.enviada(email));
+        }
+        return resultados;
+    }
+
+    /**
+     * Si sale el último integrante, el grupo se elimina junto con su chat. Si sale el administrador,
+     * la administración pasa al integrante que lleva más tiempo en el grupo.
+     */
+    @Transactional
+    public SalidaGrupoResponse salirGrupo(UUID grupoId) {
         UsuarioEntity usuario = getCurrentUsuario();
         GrupoMiembroEntity membresia = miembroRepository.findByGrupoIdAndUsuarioId(grupoId, usuario.getId())
                 .orElseThrow(() -> new BusinessException("NOT_MEMBER", "No eres miembro de este grupo"));
@@ -173,21 +269,25 @@ public class GrupoService {
         long totalMiembros = miembroRepository.countByGrupoId(grupoId);
 
         if (totalMiembros == 1) {
-            grupoRepository.deleteById(grupoId);
-            return;
+            grupoRepository.eliminarGrupo(grupoId);
+            return new SalidaGrupoResponse(true, null);
         }
 
         boolean esAdmin = membresia.getRol() == RolGrupo.ADMIN_GRUPO;
         miembroRepository.delete(membresia);
+        miembroRepository.flush();
 
+        String nuevoAdministrador = null;
         if (esAdmin) {
             List<GrupoMiembroEntity> restantes = miembroRepository.findMiembrosOrdenados(grupoId);
             if (!restantes.isEmpty()) {
                 GrupoMiembroEntity nuevoAdmin = restantes.get(0);
                 nuevoAdmin.setRol(RolGrupo.ADMIN_GRUPO);
                 miembroRepository.save(nuevoAdmin);
+                nuevoAdministrador = nuevoAdmin.getUsuario().getNombre();
             }
         }
+        return new SalidaGrupoResponse(false, nuevoAdministrador);
     }
 
     @Transactional(readOnly = true)
@@ -260,6 +360,15 @@ public class GrupoService {
         if (Boolean.TRUE.equals(grupo.getPrivado())
                 && !miembroRepository.existsByGrupoIdAndUsuarioId(grupo.getId(), usuarioId)) {
             throw new BusinessException("FORBIDDEN", "No tienes acceso a este grupo privado");
+        }
+    }
+
+    private void validarAdminGrupo(UUID grupoId, UUID usuarioId) {
+        boolean esAdmin = miembroRepository.findByGrupoIdAndUsuarioId(grupoId, usuarioId)
+                .map(m -> m.getRol() == RolGrupo.ADMIN_GRUPO)
+                .orElse(false);
+        if (!esAdmin) {
+            throw new BusinessException("GROUP_ADMIN_REQUIRED", "Solo el administrador del grupo puede editarlo");
         }
     }
 

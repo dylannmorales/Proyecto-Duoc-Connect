@@ -2,13 +2,16 @@ package cl.duoc.connect.presentation.controller;
 
 import cl.duoc.connect.application.dto.request.CreateGrupoRequest;
 import cl.duoc.connect.application.dto.request.EnviarMensajeRequest;
+import cl.duoc.connect.application.dto.request.InvitarGrupoRequest;
+import cl.duoc.connect.application.dto.request.UpdateGrupoRequest;
 import cl.duoc.connect.application.dto.request.UnirseGrupoRequest;
 import cl.duoc.connect.application.dto.request.UnirsePorCodigoRequest;
 import cl.duoc.connect.application.dto.response.ApiResponse;
 import cl.duoc.connect.application.dto.response.GrupoResponse;
+import cl.duoc.connect.application.dto.response.InvitacionResponse;
 import cl.duoc.connect.application.dto.response.MensajeGrupoResponse;
 import cl.duoc.connect.application.dto.response.MiembroGrupoResponse;
-import cl.duoc.connect.application.dto.response.MessageResponse;
+import cl.duoc.connect.application.dto.response.SalidaGrupoResponse;
 import cl.duoc.connect.application.dto.response.PageResponse;
 import cl.duoc.connect.application.service.GrupoService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -21,6 +24,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -56,6 +60,22 @@ public class GrupoController {
         return ApiResponse.ok(grupoService.crearGrupo(request), "Grupo creado exitosamente");
     }
 
+    @PutMapping("/{id}")
+    @Operation(summary = "Editar grupo de estudio (solo administrador del grupo)")
+    public ApiResponse<GrupoResponse> editarGrupo(
+            @PathVariable UUID id,
+            @Valid @RequestBody UpdateGrupoRequest request) {
+        return ApiResponse.ok(grupoService.editarGrupo(id, request), "Grupo actualizado");
+    }
+
+    @PostMapping("/{id}/invitaciones")
+    @Operation(summary = "Invitar estudiantes al grupo por correo institucional")
+    public ApiResponse<List<InvitacionResponse>> invitarPorCorreo(
+            @PathVariable UUID id,
+            @Valid @RequestBody InvitarGrupoRequest request) {
+        return ApiResponse.ok(grupoService.invitarPorCorreo(id, request.getEmails()));
+    }
+
     @GetMapping("/{id}")
     @Operation(summary = "Obtener detalle de un grupo")
     public ApiResponse<GrupoResponse> obtenerGrupo(@PathVariable UUID id) {
@@ -83,10 +103,12 @@ public class GrupoController {
     }
 
     @DeleteMapping("/{id}/salir")
-    @Operation(summary = "Salir de un grupo")
-    public ApiResponse<MessageResponse> salirGrupo(@PathVariable UUID id) {
-        grupoService.salirGrupo(id);
-        return ApiResponse.ok(MessageResponse.builder().message("Has salido del grupo").build());
+    @Operation(summary = "Salir de un grupo (si es el último integrante, el grupo se elimina)")
+    public ApiResponse<SalidaGrupoResponse> salirGrupo(@PathVariable UUID id) {
+        SalidaGrupoResponse salida = grupoService.salirGrupo(id);
+        return ApiResponse.ok(salida, salida.grupoEliminado()
+                ? "Has salido del grupo y se eliminó por quedar sin integrantes"
+                : "Has salido del grupo");
     }
 
     @GetMapping("/{id}/miembros")

@@ -15,6 +15,7 @@ public class MiembroGrupoResponse {
 
     private final UUID usuarioId;
     private final String nombre;
+    private final String email;
     private final String fotoUrl;
     private final RolGrupo rol;
     private final Instant joinedAt;

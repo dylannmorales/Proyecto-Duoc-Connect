@@ -1,0 +1,159 @@
+[33mcommit ec42958b463ef5824e97cb465e3e0dc8be3e410d[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mbackend-rama[m[33m, [m[1;31morigin/backend-rama[m[33m)[m
+Author: DNjolan <dnjolan546@gmail.com>
+Date:   Sun Nov 1 12:02:56 2026 -0300
+
+    Sprint 6 y 7, compartir grupo y apuntes mediante correo y link
+
+[33mcommit f682f80c083ff6d15654734012a1dfe04b9c7385[m
+Author: DNjolan <dnjolan546@gmail.com>
+Date:   Sat Oct 10 20:17:19 2026 -0300
+
+    fase 1
+
+[33mcommit 13e81e9595739b0501c75bfe5183b3c842578d08[m
+Author: DNjolan <dnjolan546@gmail.com>
+Date:   Sat Oct 10 20:14:13 2026 -0300
+
+    sprint 5
+
+[33mcommit 596202bdaf1f30bbcf9f2eb5e374d101b8b9fbaf[m
+Merge: 2af042f c973bfa
+Author: copilot-swe-agent[bot] <198982749+Copilot@users.noreply.github.com>
+Date:   Sat Oct 10 23:00:49 2026 +0000
+
+    Merge remote-tracking branch 'origin/main' into backend-rama
+    
+    # Conflicts:
+    #       backend/.mvn/wrapper/maven-wrapper.properties
+    #       backend/Dockerfile
+    #       backend/mvnw.cmd
+    #       backend/pom.xml
+    #       backend/src/main/java/cl/duoc/connect/application/mapper/UsuarioMapper.java
+    #       backend/src/main/java/cl/duoc/connect/infrastructure/persistence/entity/GrupoMiembroEntity.java
+    #       backend/src/main/java/cl/duoc/connect/infrastructure/persistence/entity/GrupoMiembroId.java
+    #       backend/src/main/java/cl/duoc/connect/infrastructure/persistence/entity/ValoracionApunteEntity.java
+    #       backend/src/main/java/cl/duoc/connect/infrastructure/persistence/entity/ValoracionApunteId.java
+    
+    Co-authored-by: DNjolan <101734125+DNjolan@users.noreply.github.com>
+
+[33mcommit 2af042f2c1bcb7d06865fce492c65956d79c2eae[m
+Author: DNjolan <dnjolan546@gmail.com>
+Date:   Sat Oct 10 19:58:41 2026 -0300
+
+    sprint 5
+
+[33mcommit c973bfa811180c2ae1f184ddbe4bbeca48c4b926[m
+Author: Daniel <101734125+DNjolan@users.noreply.github.com>
+Date:   Sat Oct 10 19:53:16 2026 -0300
+
+    Delete backend directory
+
+[33mcommit a5624a909ff0782b0d1c84de630116b6e7227045[m[33m ([m[1;32mmain[m[33m, [m[1;32mfrontend-main[m[33m)[m
+Author: DNjolan <dnjolan546@gmail.com>
+Date:   Sat Oct 10 19:52:07 2026 -0300
+
+    sprint 5 finalizado
+
+[33mcommit c3516baba94c29396374170f848cf532d387eada[m
+Author: Isaías <89994786+Isaias7Gatica@users.noreply.github.com>
+Date:   Tue Oct 6 09:27:35 2026 -0300
+
+    Delete frontend directory
+
+[33mcommit 22128781fe6be59150d88230a7548c064ad90607[m
+Author: Isaías <89994786+Isaias7Gatica@users.noreply.github.com>
+Date:   Tue Oct 6 09:17:17 2026 -0300
+
+    Se añade frontend
+
+[33mcommit 0d9ed593e6e7751ffe6c1502fae90f82246a6728[m
+Merge: cffaf78 a4b5388
+Author: Daniel <101734125+DNjolan@users.noreply.github.com>
+Date:   Sun Sep 27 09:23:00 2026 -0300
+
+    Merge pull request #2 from dylannmorales/backend-rama
+    
+    Creación Restrablecer contraseña y Perfil de usuario
+
+[33mcommit a4b53881a9b6034950c830cd5de9ca863eb13611[m
+Author: DNjolan <dnjolan546@gmail.com>
+Date:   Sun Sep 27 09:22:54 2026 -0300
+
+    Creación Restrablecer contraseña y Perfil de usuario
+
+[33mcommit cffaf78416d2974512807408a7dc8cd3548f7a12[m
+Author: dylannmorales <dylann200422@gmail.com>
+Date:   Tue Sep 22 10:53:48 2026 -0300
+
+    Add files via upload
+    
+    Evidencia individual Dylann
+
+[33mcommit 8a519fba52aff9831252f61ff872f18fb5d7a2ca[m
+Merge: 03d9866 e3d855d
+Author: Daniel <101734125+DNjolan@users.noreply.github.com>
+Date:   Sat Sep 19 18:27:36 2026 -0300
+
+    Merge pull request #1 from dylannmorales/backend-rama
+    
+    Creación Inicio sesión y registrar cuenta
+
+[33mcommit e3d855d9c80bc1a1b27d72532466c64512ea1f97[m
+Author: DNjolan <dnjolan546@gmail.com>
+Date:   Sat Sep 19 18:26:00 2026 -0300
+
+    Creación Inicio sesión y registrar cuenta
+
+[33mcommit 03d9866a1e9ef59daf0e405da5c313b921c6e8c0[m
+Author: Isaías <89994786+Isaias7Gatica@users.noreply.github.com>
+Date:   Tue Sep 15 08:54:47 2026 -0300
+
+    Delete Fase 1/Evidencias Individuales/Gatica_isaias
+
+[33mcommit 85103c6ea115018efa431dd321259367abee6a19[m
+Author: Isaías <89994786+Isaias7Gatica@users.noreply.github.com>
+Date:   Tue Sep 15 08:54:32 2026 -0300
+
+    Delete Fase 1/Evidencias Grupales/Gatica_isaias
+
+[33mcommit e3def7d3d7583a48fe834ef19a0faaba7c19c5c5[m
+Author: DiegoGarcesM <73831867+DiegoGarcesM@users.noreply.github.com>
+Date:   Mon Sep 14 22:34:31 2026 -0300
+
+    Add files via upload
+
+[33mcommit 4f006519bcb218834d7cbbe1d6105368cdea1998[m
+Author: DiegoGarcesM <73831867+DiegoGarcesM@users.noreply.github.com>
+Date:   Mon Sep 14 22:24:31 2026 -0300
+
+    Add files via upload
+
+[33mcommit a2b1d900becd4a158f9c3b93380ae2589e0012b2[m
+Author: Isaías <89994786+Isaias7Gatica@users.noreply.github.com>
+Date:   Mon Sep 14 22:01:16 2026 -0300
+
+    Create Gatica_isaias
+
+[33mcommit eda45b35ac3a7f3944ac16fd9deabf7180e510a2[m
+Author: Isaías <89994786+Isaias7Gatica@users.noreply.github.com>
+Date:   Mon Sep 14 21:59:45 2026 -0300
+
+    Create Gatica_isaias
+    
+    Evidencias realizadas individualmente para la Fase 1 del proyecto Duoc Connect.
+
+[33mcommit a4a0b9dd201a6322eb67a5218b18e1e04abfde46[m
+Author: dylannmorales <dylann200422@gmail.com>
+Date:   Wed Sep 9 21:40:04 2026 -0300
+
+    esquema y base de datos
+    
+    Co-authored-by: Cursor <cursoragent@cursor.com>
+
+[33mcommit 198c33c911868c84b5399e5fd42177f2570b2053[m
+Author: dylannmorales <dylann200422@gmail.com>
+Date:   Wed Sep 9 21:25:20 2026 -0300
+
+    Initial commit
+    
+    Co-authored-by: Cursor <cursoragent@cursor.com>

@@ -42,6 +42,7 @@ public class GrupoMapper {
         return MiembroGrupoResponse.builder()
                 .usuarioId(miembro.getUsuario().getId())
                 .nombre(miembro.getUsuario().getNombre())
+                .email(miembro.getUsuario().getEmail())
                 .fotoUrl(miembro.getUsuario().getFotoUrl())
                 .rol(miembro.getRol())
                 .joinedAt(miembro.getJoinedAt())

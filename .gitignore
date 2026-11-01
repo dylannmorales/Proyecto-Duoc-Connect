@@ -27,3 +27,5 @@ uploads/
 
 # Docker
 .env
+
+*.zip

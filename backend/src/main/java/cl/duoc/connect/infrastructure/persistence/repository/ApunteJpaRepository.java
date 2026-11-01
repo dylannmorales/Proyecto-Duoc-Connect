@@ -5,6 +5,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -66,4 +67,8 @@ public interface ApunteJpaRepository extends JpaRepository<ApunteEntity, UUID> {
             """,
             countQuery = "SELECT COUNT(a) FROM ApunteEntity a")
     Page<ApunteEntity> findAllForAdmin(Pageable pageable);
+
+    @Modifying
+    @Query("UPDATE ApunteEntity a SET a.descargas = a.descargas + 1 WHERE a.id = :id")
+    int incrementarDescargas(@Param("id") UUID id);
 }
