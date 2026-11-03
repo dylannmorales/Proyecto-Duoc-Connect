@@ -1,25 +1,17 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '@/features/auth/hooks/useAuth';
 import { getCarreras } from '@/features/auth/services/authService';
 import { getAsignaturas } from '@/features/groups/services/groupsService';
 import { NoteCard } from '@/features/notes/components/NoteCard';
-import { ShareNoteModal } from '@/features/notes/components/ShareNoteModal';
 import { UploadNoteModal } from '@/features/notes/components/UploadNoteModal';
-import {
-  descargarApunte,
-  searchApuntes,
-  uploadApunte,
-  valorarApunte,
-} from '@/features/notes/services/notesService';
-import type { Apunte, UploadApuntePayload } from '@/features/notes/types/note.types';
+import { searchApuntes, uploadApunte } from '@/features/notes/services/notesService';
+import type { UploadApuntePayload } from '@/features/notes/types/note.types';
 import { Button, FormAlert, Input, Select } from '@/shared/components/ui/FormControls';
 import { useDebounce } from '@/shared/hooks/useDebounce';
 import { getApiErrorMessage } from '@/shared/utils/errors';
 
 export function NotesPage() {
   const queryClient = useQueryClient();
-  const { user } = useAuth();
 
   const [search, setSearch] = useState('');
   const [carreraId, setCarreraId] = useState('');
@@ -27,7 +19,6 @@ export function NotesPage() {
   const [page, setPage] = useState(0);
   const [showUpload, setShowUpload] = useState(false);
   const [error, setError] = useState('');
-  const [shareApunte, setShareApunte] = useState<Apunte | null>(null);
 
   const debouncedSearch = useDebounce(search, 300);
 
@@ -61,26 +52,6 @@ export function NotesPage() {
     }
   }
 
-  async function handleDownload(apunte: Apunte) {
-    setError('');
-    try {
-      await descargarApunte(apunte);
-      await queryClient.invalidateQueries({ queryKey: ['apuntes'] });
-    } catch (err) {
-      setError(getApiErrorMessage(err, 'No se pudo descargar el apunte'));
-    }
-  }
-
-  async function handleRate(apunte: Apunte, puntuacion: number) {
-    setError('');
-    try {
-      await valorarApunte(apunte.id, puntuacion);
-      await queryClient.invalidateQueries({ queryKey: ['apuntes'] });
-    } catch (err) {
-      setError(getApiErrorMessage(err, 'No se pudo guardar la valoración'));
-    }
-  }
-
   const apuntes = apuntesQuery.data?.content ?? [];
 
   return (
@@ -88,7 +59,7 @@ export function NotesPage() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold">Banco de apuntes</h1>
-          <p className="text-gray-600">Comparte, descarga y valora material académico en PDF</p>
+          <p className="text-gray-600">Comparte material académico en PDF</p>
         </div>
         <Button onClick={() => setShowUpload(true)}>Subir apunte</Button>
       </div>
@@ -149,14 +120,7 @@ export function NotesPage() {
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {apuntes.map((apunte) => (
-          <NoteCard
-            key={apunte.id}
-            apunte={apunte}
-            esPropio={apunte.usuarioId === user?.id}
-            onDownload={handleDownload}
-            onRate={handleRate}
-            onShare={setShareApunte}
-          />
+          <NoteCard key={apunte.id} apunte={apunte} />
         ))}
       </div>
 
@@ -177,8 +141,6 @@ export function NotesPage() {
           </Button>
         </div>
       )}
-
-      <ShareNoteModal apunte={shareApunte} onClose={() => setShareApunte(null)} />
 
       <UploadNoteModal
         open={showUpload}

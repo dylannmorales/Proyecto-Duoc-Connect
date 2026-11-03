@@ -1,22 +1,17 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useState, type FormEvent } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getCarreras } from '@/features/auth/services/authService';
 import { getAsignaturas } from '@/features/groups/services/groupsService';
-import type { CreateGrupoPayload, Grupo } from '@/features/groups/types/group.types';
+import type { CreateGrupoPayload } from '@/features/groups/types/group.types';
 import { Button, Input, Select } from '@/shared/components/ui/FormControls';
 
 interface CreateGroupModalProps {
   open: boolean;
   onClose: () => void;
   onSubmit: (payload: CreateGrupoPayload) => Promise<void>;
-  /** Si se indica, el modal edita este grupo en vez de crear uno nuevo. */
-  grupo?: Grupo;
 }
 
-const MAX_MIEMBROS_OPCIONES = [5, 10, 15, 20, 30, 50];
-
-export function CreateGroupModal({ open, onClose, onSubmit, grupo }: CreateGroupModalProps) {
-  const editando = !!grupo;
+export function CreateGroupModal({ open, onClose, onSubmit }: CreateGroupModalProps) {
   const [nombre, setNombre] = useState('');
   const [descripcion, setDescripcion] = useState('');
   const [carreraId, setCarreraId] = useState('');
@@ -24,22 +19,6 @@ export function CreateGroupModal({ open, onClose, onSubmit, grupo }: CreateGroup
   const [maxMiembros, setMaxMiembros] = useState('20');
   const [privado, setPrivado] = useState(false);
   const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    if (!open || !grupo) return;
-    setNombre(grupo.nombre);
-    setDescripcion(grupo.descripcion ?? '');
-    setCarreraId(grupo.carreraId);
-    setAsignaturaId(grupo.asignaturaId ?? '');
-    setMaxMiembros(String(grupo.maxMiembros));
-    setPrivado(grupo.privado);
-  }, [open, grupo]);
-
-  const opcionesMaxMiembros = Array.from(
-    new Set([...MAX_MIEMBROS_OPCIONES, ...(grupo ? [grupo.maxMiembros] : [])]),
-  )
-    .sort((a, b) => a - b)
-    .filter((n) => !grupo || n >= grupo.miembrosActuales);
 
   const carrerasQuery = useQuery({ queryKey: ['carreras'], queryFn: getCarreras });
   const asignaturasQuery = useQuery({
@@ -63,14 +42,12 @@ export function CreateGroupModal({ open, onClose, onSubmit, grupo }: CreateGroup
         privado,
       });
       onClose();
-      if (!editando) {
-        setNombre('');
-        setDescripcion('');
-        setCarreraId('');
-        setAsignaturaId('');
-        setMaxMiembros('20');
-        setPrivado(false);
-      }
+      setNombre('');
+      setDescripcion('');
+      setCarreraId('');
+      setAsignaturaId('');
+      setMaxMiembros('20');
+      setPrivado(false);
     } finally {
       setLoading(false);
     }
@@ -80,7 +57,7 @@ export function CreateGroupModal({ open, onClose, onSubmit, grupo }: CreateGroup
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
       <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-6 shadow-xl">
         <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-xl font-bold">{editando ? 'Editar grupo de estudio' : 'Crear grupo de estudio'}</h2>
+          <h2 className="text-xl font-bold">Crear grupo de estudio</h2>
           <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600">
             ✕
           </button>
@@ -128,14 +105,9 @@ export function CreateGroupModal({ open, onClose, onSubmit, grupo }: CreateGroup
             name="maxMiembros"
             value={maxMiembros}
             onChange={(e) => setMaxMiembros(e.target.value)}
-            options={opcionesMaxMiembros.map((n) => ({ value: String(n), label: String(n) }))}
+            options={[5, 10, 15, 20, 30, 50].map((n) => ({ value: String(n), label: String(n) }))}
             required
           />
-          {editando && (
-            <p className="-mt-2 text-xs text-gray-500">
-              No puede ser menor que los {grupo.miembrosActuales} integrantes actuales.
-            </p>
-          )}
 
           <label className="flex items-center gap-2 text-sm">
             <input
@@ -152,7 +124,7 @@ export function CreateGroupModal({ open, onClose, onSubmit, grupo }: CreateGroup
               Cancelar
             </Button>
             <Button type="submit" loading={loading}>
-              {editando ? 'Guardar cambios' : 'Crear grupo'}
+              Crear grupo
             </Button>
           </div>
         </form>

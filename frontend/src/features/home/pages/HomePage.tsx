@@ -30,11 +30,6 @@ const features = [
     description: 'Comparte y descarga material académico en PDF.',
     to: '/apuntes',
   },
-  {
-    title: 'Foro académico',
-    description: 'Pregunta, responde y vota para destacar las mejores soluciones.',
-    to: '/foro',
-  },
 ];
 
 export function HomePage() {
@@ -86,7 +81,7 @@ export function HomePage() {
         </div>
       </section>
 
-      <section className="grid gap-4 sm:grid-cols-3">
+      <section className="grid gap-4 sm:grid-cols-2">
         {features.map((feature) => (
           <Link
             key={feature.title}

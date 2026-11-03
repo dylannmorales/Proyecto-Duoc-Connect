@@ -30,22 +30,3 @@ export async function uploadApunte(payload: UploadApuntePayload) {
   const { data } = await apiClient.post<ApiResponse<Apunte>>('/apuntes', formData);
   return data.data;
 }
-
-export async function valorarApunte(id: string, puntuacion: number) {
-  const { data } = await apiClient.put<ApiResponse<Apunte>>(`/apuntes/${id}/valoracion`, { puntuacion });
-  return data.data;
-}
-
-export async function descargarApunte(apunte: Pick<Apunte, 'id' | 'nombreArchivo'>) {
-  const response = await apiClient.get<Blob>(`/apuntes/${apunte.id}/descargar`, {
-    responseType: 'blob',
-  });
-  const url = URL.createObjectURL(response.data);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = apunte.nombreArchivo;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  URL.revokeObjectURL(url);
-}

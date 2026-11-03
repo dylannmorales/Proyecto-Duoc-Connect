@@ -1,13 +1,11 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
-import { CreateGroupModal } from '@/features/groups/components/CreateGroupModal';
 import { GroupChat } from '@/features/groups/components/GroupChat';
-import { LeaveGroupModal } from '@/features/groups/components/LeaveGroupModal';
 import { MemberList } from '@/features/groups/components/MemberList';
-import { ShareGroupModal } from '@/features/groups/components/ShareGroupModal';
-import { getGrupo, leaveGrupo, updateGrupo } from '@/features/groups/services/groupsService';
-import type { CreateGrupoPayload, Grupo } from '@/features/groups/types/group.types';
+import { getGrupo, leaveGrupo } from '@/features/groups/services/groupsService';
+import { shareGroupInvitation } from '@/features/groups/utils/shareGroup';
+import type { Grupo } from '@/features/groups/types/group.types';
 import { Button, FormAlert } from '@/shared/components/ui/FormControls';
 import { getApiErrorMessage } from '@/shared/utils/errors';
 
@@ -19,9 +17,6 @@ export function GroupDetailPage() {
   const initialGrupo = (location.state as { grupo?: Grupo } | null)?.grupo;
   const [error, setError] = useState('');
   const [leaving, setLeaving] = useState(false);
-  const [showShare, setShowShare] = useState(false);
-  const [showEdit, setShowEdit] = useState(false);
-  const [showLeave, setShowLeave] = useState(false);
 
   const grupoQuery = useQuery({
     queryKey: ['grupo', id],
@@ -31,37 +26,17 @@ export function GroupDetailPage() {
   });
 
   const grupo = grupoQuery.data;
-  const esAdmin = grupo?.rolEnGrupo === 'ADMIN_GRUPO';
-
-  async function handleEdit(payload: CreateGrupoPayload) {
-    setError('');
-    try {
-      const actualizado = await updateGrupo(id!, payload);
-      queryClient.setQueryData(['grupo', id], actualizado);
-      await queryClient.invalidateQueries({ queryKey: ['grupos'] });
-    } catch (err) {
-      setError(getApiErrorMessage(err, 'No se pudo actualizar el grupo'));
-      throw err;
-    }
-  }
 
   async function handleLeave() {
-    if (!id) return;
+    if (!id || !confirm('¿Seguro que quieres salir de este grupo?')) return;
     setLeaving(true);
     setError('');
     try {
-      const { data: salida, message } = await leaveGrupo(id);
-      queryClient.removeQueries({ queryKey: ['grupo', id] });
-      queryClient.removeQueries({ queryKey: ['grupo-miembros', id] });
-      queryClient.removeQueries({ queryKey: ['grupo-mensajes', id] });
+      await leaveGrupo(id);
       await queryClient.invalidateQueries({ queryKey: ['grupos'] });
-      const aviso = salida.nuevoAdministrador
-        ? `${message}. ${salida.nuevoAdministrador} es ahora el administrador.`
-        : `${message}.`;
-      navigate('/grupos', { replace: true, state: { aviso } });
+      navigate('/grupos');
     } catch (err) {
-      setError(getApiErrorMessage(err, 'No se pudo salir del grupo'));
-      setShowLeave(false);
+      setError(getApiErrorMessage(err));
     } finally {
       setLeaving(false);
     }
@@ -105,19 +80,22 @@ export function GroupDetailPage() {
           {grupo.descripcion && <p className="mt-2 text-sm text-gray-500">{grupo.descripcion}</p>}
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap gap-2">
           {grupo.codigoInvitacion && (
-            <div className="rounded-lg bg-gray-100 px-3 py-2 text-sm">
-              Código: <span className="font-mono font-bold">{grupo.codigoInvitacion}</span>
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="rounded-lg bg-gray-100 px-3 py-2 text-sm">
+                Código: <span className="font-mono font-bold">{grupo.codigoInvitacion}</span>
+              </div>
+              <Button
+                variant="secondary"
+                className="!py-2 !text-xs"
+                onClick={() => shareGroupInvitation(grupo.nombre, grupo.codigoInvitacion!)}
+              >
+                Compartir por Gmail
+              </Button>
             </div>
           )}
-          <Button onClick={() => setShowShare(true)}>Compartir</Button>
-          {esAdmin && (
-            <Button variant="secondary" onClick={() => setShowEdit(true)}>
-              Editar grupo
-            </Button>
-          )}
-          <Button variant="danger" onClick={() => setShowLeave(true)}>
+          <Button variant="secondary" onClick={handleLeave} loading={leaving}>
             Salir del grupo
           </Button>
         </div>
@@ -133,18 +111,6 @@ export function GroupDetailPage() {
           <MemberList grupoId={grupo.id} />
         </div>
       </div>
-
-      <ShareGroupModal grupo={grupo} open={showShare} onClose={() => setShowShare(false)} />
-      <LeaveGroupModal
-        grupo={grupo}
-        open={showLeave}
-        leaving={leaving}
-        onClose={() => setShowLeave(false)}
-        onConfirm={handleLeave}
-      />
-      {esAdmin && (
-        <CreateGroupModal grupo={grupo} open={showEdit} onClose={() => setShowEdit(false)} onSubmit={handleEdit} />
-      )}
     </div>
   );
 }

@@ -5,13 +5,9 @@ import { ForgotPasswordPage } from '@/features/auth/pages/ForgotPasswordPage';
 import { LoginPage } from '@/features/auth/pages/LoginPage';
 import { RegisterPage } from '@/features/auth/pages/RegisterPage';
 import { ResetPasswordPage } from '@/features/auth/pages/ResetPasswordPage';
-import { ForumPage } from '@/features/forum/pages/ForumPage';
-import { QuestionDetailPage } from '@/features/forum/pages/QuestionDetailPage';
 import { GroupDetailPage } from '@/features/groups/pages/GroupDetailPage';
 import { GroupsPage } from '@/features/groups/pages/GroupsPage';
-import { JoinByLinkPage } from '@/features/groups/pages/JoinByLinkPage';
 import { HomePage } from '@/features/home/pages/HomePage';
-import { NoteDetailPage } from '@/features/notes/pages/NoteDetailPage';
 import { NotesPage } from '@/features/notes/pages/NotesPage';
 import { ProfilePage } from '@/features/profile/pages/ProfilePage';
 import { MainLayout } from '@/shared/components/layout/MainLayout';
@@ -43,38 +39,6 @@ export function AppRoutes() {
             element={
               <ProtectedRoute>
                 <NotesPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="grupos/unirse/:codigo"
-            element={
-              <ProtectedRoute>
-                <JoinByLinkPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="apuntes/:id"
-            element={
-              <ProtectedRoute>
-                <NoteDetailPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="foro"
-            element={
-              <ProtectedRoute>
-                <ForumPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="foro/:id"
-            element={
-              <ProtectedRoute>
-                <QuestionDetailPage />
               </ProtectedRoute>
             }
           />

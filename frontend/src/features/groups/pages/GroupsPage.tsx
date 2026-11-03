@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { getCarreras } from '@/features/auth/services/authService';
 import { CreateGroupModal } from '@/features/groups/components/CreateGroupModal';
 import { JoinByCodeModal } from '@/features/groups/components/JoinByCodeModal';
@@ -14,10 +14,7 @@ import { useDebounce } from '@/shared/hooks/useDebounce';
 
 export function GroupsPage() {
   const navigate = useNavigate();
-  const location = useLocation();
   const queryClient = useQueryClient();
-  // Aviso que deja el detalle del grupo al salir de él.
-  const aviso = (location.state as { aviso?: string } | null)?.aviso;
 
   const [search, setSearch] = useState('');
   const [carreraId, setCarreraId] = useState('');
@@ -91,7 +88,6 @@ export function GroupsPage() {
         </div>
       </div>
 
-      {aviso && <FormAlert type="success" message={aviso} />}
       {error && <FormAlert message={error} />}
 
       <div className="grid gap-4 rounded-xl border border-gray-200 bg-white p-4 md:grid-cols-3">
