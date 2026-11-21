@@ -139,10 +139,10 @@ public class AuthService {
     public MessageResponse resetPassword(ResetPasswordRequest request) {
         PasswordResetTokenEntity resetToken = passwordResetTokenRepository
                 .findByTokenAndUsadoFalse(request.getToken())
-                .orElseThrow(() -> new BusinessException("INVALID_TOKEN", "Token inválido o ya utilizado"));
+                .orElseThrow(() -> new BusinessException("RESET_TOKEN_INVALID", "Token inválido o ya utilizado"));
 
         if (resetToken.getExpiraEn().isBefore(Instant.now())) {
-            throw new BusinessException("TOKEN_EXPIRED", "El token ha expirado");
+            throw new BusinessException("RESET_TOKEN_INVALID", "El token ha expirado");
         }
 
         UsuarioEntity usuario = resetToken.getUsuario();

@@ -1,6 +1,7 @@
+import { BackButton, BackNav } from '@/shared/components/ui/BackNav';
 import { useState, type FormEvent } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Link, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { VoteButton } from '@/features/forum/components/VoteButton';
 import {
@@ -60,11 +61,11 @@ export function QuestionDetailPage() {
 
   if (preguntaQuery.isError || !preguntaQuery.data) {
     return (
-      <div className="space-y-4">
-        <FormAlert message={getApiErrorMessage(preguntaQuery.error, 'No se encontró la pregunta')} />
-        <Link to="/foro" className="text-sm font-semibold text-yellow-700 hover:underline">
-          ← Volver al foro
-        </Link>
+      <div className="card mx-auto max-w-md p-8 text-center">
+        <p className="text-lg font-semibold">{getApiErrorMessage(preguntaQuery.error, 'No se encontró la pregunta')}</p>
+        <div className="mt-5">
+          <BackButton to="/foro" label="Ir al foro" />
+        </div>
       </div>
     );
   }
@@ -75,13 +76,11 @@ export function QuestionDetailPage() {
 
   return (
     <div className="space-y-6">
-      <Link to="/foro" className="text-sm font-semibold text-yellow-700 hover:underline">
-        ← Volver al foro
-      </Link>
+      <BackNav to="/foro" parentLabel="Foro académico" current={pregunta.titulo} />
 
       {error && <FormAlert message={error} />}
 
-      <article className="flex gap-4 rounded-xl border border-gray-200 bg-white p-6">
+      <article className="flex gap-4 card p-6">
         <VoteButton
           votos={pregunta.votos}
           votado={pregunta.votado}
@@ -163,8 +162,8 @@ export function QuestionDetailPage() {
         })}
       </div>
 
-      <form onSubmit={handleReply} className="space-y-3 rounded-xl border border-gray-200 bg-white p-5">
-        <label htmlFor="respuesta" className="block text-sm font-medium text-gray-700">
+      <form onSubmit={handleReply} className="space-y-3 card p-5">
+        <label htmlFor="respuesta" className="field-label">
           Tu respuesta
         </label>
         <textarea
@@ -174,7 +173,7 @@ export function QuestionDetailPage() {
           rows={4}
           maxLength={5000}
           required
-          className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-duoc-yellow focus:ring-2 focus:ring-yellow-100"
+          className="field-input"
         />
         <div className="flex justify-end">
           <Button type="submit" loading={sending}>

@@ -14,7 +14,7 @@ export function MemberList({ grupoId }: MemberListProps) {
   const miembros = miembrosQuery.data ?? [];
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-4">
+    <div className="card p-4">
       <h3 className="mb-4 font-semibold">Integrantes ({miembros.length})</h3>
 
       {miembrosQuery.isLoading && <p className="text-sm text-gray-500">Cargando...</p>}

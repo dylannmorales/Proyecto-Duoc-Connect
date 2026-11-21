@@ -150,8 +150,20 @@ class GrupoServiceTest {
 
             assertThatThrownBy(() -> grupoService.editarGrupo(grupo.getId(), edicion((short) 15)))
                     .isInstanceOf(BusinessException.class)
-                    .hasMessageContaining("Solo el administrador");
+                    .hasMessageContaining("Solo quien creó el grupo o su administrador");
             verify(grupoRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("Quien creó el grupo puede editarlo aunque ya no sea el administrador")
+        void creadorSinRolAdminEdita() {
+            grupo.setCreador(miembro);
+            TestData.loginComo(miembro);
+
+            GrupoResponse response = grupoService.editarGrupo(grupo.getId(), edicion((short) 15));
+
+            assertThat(response.getNombre()).isEqualTo("Estudio SQL avanzado");
+            verify(grupoRepository).save(grupo);
         }
 
         @Test

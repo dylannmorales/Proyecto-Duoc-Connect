@@ -31,6 +31,7 @@ export interface Grupo {
 export interface MiembroGrupo {
   usuarioId: string;
   nombre: string;
+  email: string;
   fotoUrl: string | null;
   rol: RolGrupo;
   joinedAt: string;
@@ -53,4 +54,17 @@ export interface CreateGrupoPayload {
   asignaturaId?: string;
   maxMiembros?: number;
   privado: boolean;
+}
+
+export type EstadoInvitacion = 'ENVIADA' | 'YA_ES_MIEMBRO' | 'INVALIDO';
+
+export interface InvitacionResultado {
+  email: string;
+  estado: EstadoInvitacion;
+  mensaje: string;
+}
+
+export interface SalidaGrupo {
+  grupoEliminado: boolean;
+  nuevoAdministrador: string | null;
 }

@@ -43,8 +43,18 @@ export function GroupChat({ grupoId }: GroupChatProps) {
   const mensajesQuery = useQuery({
     queryKey: ['grupo-mensajes', grupoId],
     queryFn: () => getGrupoMensajes(grupoId),
+    // El chat siempre se pide de nuevo al abrirlo: la caché de 5 minutos no sirve para mensajes.
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
     refetchInterval: connected ? false : 4000,
   });
+
+  // Al (re)conectar el WebSocket se recargan los mensajes que pudieron llegar mientras estaba desconectado.
+  const { refetch } = mensajesQuery;
+  useEffect(() => {
+    if (connected) void refetch();
+  }, [connected, refetch]);
 
   useEffect(() => {
     if (!mensajesQuery.data?.content) return;
@@ -58,7 +68,9 @@ export function GroupChat({ grupoId }: GroupChatProps) {
   }, [mensajesQuery.data?.content]);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    // Solo desplaza la lista de mensajes; scrollIntoView movía toda la página hasta el chat.
+    const lista = bottomRef.current?.parentElement;
+    if (lista) lista.scrollTo({ top: lista.scrollHeight, behavior: 'smooth' });
   }, [mensajes]);
 
   async function handleSubmit(event: FormEvent) {
@@ -91,7 +103,7 @@ export function GroupChat({ grupoId }: GroupChatProps) {
   const displayError = error || loadError || socketError;
 
   return (
-    <div className="flex h-[500px] flex-col rounded-xl border border-gray-200 bg-white">
+    <div className="flex h-[500px] flex-col card">
       <div className="flex items-center justify-between border-b border-gray-100 px-4 py-2">
         <p className="text-xs font-medium text-gray-500">Chat del grupo</p>
         <span
@@ -131,7 +143,7 @@ export function GroupChat({ grupoId }: GroupChatProps) {
             placeholder="Escribe un mensaje..."
             maxLength={2000}
             disabled={sending}
-            className="flex-1 rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-duoc-yellow focus:ring-2 focus:ring-yellow-100 disabled:bg-gray-50"
+            className="field-input flex-1"
           />
           <Button type="submit" loading={sending}>
             Enviar

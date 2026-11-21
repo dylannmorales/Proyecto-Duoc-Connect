@@ -1,7 +1,13 @@
+import { useState } from 'react';
 import type { Apunte } from '@/features/notes/types/note.types';
+import { compartirApunte, type ResultadoCompartir } from '@/features/notes/services/notesService';
 import { buildGmailShareUrl } from '@/features/groups/utils/shareGroup';
-import { Button } from '@/shared/components/ui/FormControls';
+import { Button, FormAlert } from '@/shared/components/ui/FormControls';
 import { CopyLinkButton } from '@/shared/components/ui/CopyLinkButton';
+import { EmailChipsInput, InvitationResults } from '@/shared/components/ui/EmailChipsInput';
+import { sonCorreosValidos } from '@/shared/utils/email';
+import { IconGlobe } from '@/shared/components/ui/Icons';
+import { getApiErrorMessage } from '@/shared/utils/errors';
 
 export function buildApunteLink(apunteId: string) {
   return `${window.location.origin}/apuntes/${apunteId}`;
@@ -13,6 +19,12 @@ interface ShareNoteModalProps {
 }
 
 export function ShareNoteModal({ apunte, onClose }: ShareNoteModalProps) {
+  const [correos, setCorreos] = useState<string[]>([]);
+  const [mensaje, setMensaje] = useState('');
+  const [enviando, setEnviando] = useState(false);
+  const [resultados, setResultados] = useState<ResultadoCompartir[]>([]);
+  const [error, setError] = useState('');
+
   if (!apunte) return null;
 
   const link = buildApunteLink(apunte.id);
@@ -26,35 +38,90 @@ export function ShareNoteModal({ apunte, onClose }: ShareNoteModalProps) {
     ].join('\n'),
   );
 
+  async function enviar() {
+    if (!apunte) return;
+    setError('');
+    setEnviando(true);
+    try {
+      setResultados(await compartirApunte(apunte.id, correos, mensaje.trim()));
+      setCorreos([]);
+      setMensaje('');
+    } catch (err) {
+      setError(getApiErrorMessage(err, 'No se pudo compartir el apunte'));
+    } finally {
+      setEnviando(false);
+    }
+  }
+
+  function cerrar() {
+    setCorreos([]);
+    setMensaje('');
+    setResultados([]);
+    setError('');
+    onClose();
+  }
+
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="share-note-title"
-      onClick={onClose}
-    >
-      <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
-        <div className="mb-4 flex items-start justify-between gap-4">
-          <h2 id="share-note-title" className="text-xl font-bold">
+    <div className="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="share-note-title" onClick={cerrar}>
+      <div className="modal-panel max-w-lg" onClick={(e) => e.stopPropagation()}>
+        <div className="mb-5 flex items-start justify-between gap-4">
+          <h2 id="share-note-title" className="text-xl font-bold leading-snug">
             Compartir “{apunte.titulo}”
           </h2>
-          <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600" aria-label="Cerrar">
+          <button type="button" onClick={cerrar} className="icon-btn" aria-label="Cerrar">
             ✕
           </button>
         </div>
 
-        <p className="mb-2 text-sm font-medium text-gray-700">Vínculo del apunte</p>
-        <input
-          readOnly
-          value={link}
-          onFocus={(e) => e.target.select()}
-          aria-label="Vínculo del apunte"
-          className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2.5 font-mono text-xs text-gray-700"
-        />
-        <p className="mt-2 text-xs text-gray-500">
-          Cualquier estudiante con sesión iniciada que tenga el vínculo puede ver, descargar y valorar el apunte.
-        </p>
+        <EmailChipsInput id="compartir-apunte-correos" value={correos} onChange={setCorreos} />
+
+        {correos.length > 0 && (
+          <div className="mt-3 space-y-3">
+            <div>
+              <label htmlFor="compartir-apunte-mensaje" className="field-label">
+                Mensaje (opcional)
+              </label>
+              <textarea
+                id="compartir-apunte-mensaje"
+                rows={3}
+                maxLength={500}
+                value={mensaje}
+                onChange={(e) => setMensaje(e.target.value)}
+                placeholder="Ej: Te sirve para la prueba del jueves"
+                className="field-input"
+              />
+            </div>
+            <div className="flex justify-end">
+              <Button onClick={enviar} loading={enviando} disabled={!sonCorreosValidos(correos)}>
+                Enviar
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {error && (
+          <div className="mt-3">
+            <FormAlert message={error} />
+          </div>
+        )}
+        {resultados.length > 0 && (
+          <div className="mt-3">
+            <InvitationResults resultados={resultados} />
+          </div>
+        )}
+
+        <h3 className="mb-3 mt-6 text-sm font-semibold text-gray-900">Acceso general</h3>
+        <div className="flex items-center gap-3 rounded-2xl bg-gray-50 p-3">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white ring-1 ring-gray-200">
+            <IconGlobe className="h-5 w-5" />
+          </span>
+          <div className="min-w-0 text-sm">
+            <p className="font-medium">Estudiantes de Duoc Connect</p>
+            <p className="text-xs text-gray-500">
+              Cualquier estudiante con sesión iniciada y el enlace puede ver, descargar y valorar el apunte.
+            </p>
+          </div>
+        </div>
 
         <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
           <CopyLinkButton link={link} />
@@ -63,11 +130,11 @@ export function ShareNoteModal({ apunte, onClose }: ShareNoteModalProps) {
               href={gmailUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-semibold hover:bg-gray-50"
+              className="inline-flex items-center rounded-xl border border-gray-300 px-4 py-2.5 text-sm font-semibold hover:bg-gray-50"
             >
-              Enviar por Gmail
+              Gmail
             </a>
-            <Button onClick={onClose}>Listo</Button>
+            <Button onClick={cerrar}>Listo</Button>
           </div>
         </div>
       </div>

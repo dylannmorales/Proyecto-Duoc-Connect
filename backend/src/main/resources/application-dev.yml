@@ -7,3 +7,8 @@ logging:
 spring:
   jpa:
     show-sql: true
+
+app:
+  admin:
+    # Solo para desarrollo local; en prod se usa la variable ADMIN_PASSWORD.
+    password: ${ADMIN_PASSWORD:Admin1234}

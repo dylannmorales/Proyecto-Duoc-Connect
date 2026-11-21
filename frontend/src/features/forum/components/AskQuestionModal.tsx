@@ -1,9 +1,13 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useAuth } from '@/features/auth/hooks/useAuth';
 import { getCarreras } from '@/features/auth/services/authService';
 import { getAsignaturas } from '@/features/groups/services/groupsService';
 import type { CrearPreguntaPayload } from '@/features/forum/types/forum.types';
-import { Button, Input, Select } from '@/shared/components/ui/FormControls';
+import { Input, Select, Textarea } from '@/shared/components/ui/FormControls';
+import { FileDropzone, FormModal, FormSection, SwitchField } from '@/shared/components/ui/FormKit';
+import { IconChat, IconGlobe } from '@/shared/components/ui/Icons';
+import { getApiErrorMessage } from '@/shared/utils/errors';
 
 interface AskQuestionModalProps {
   open: boolean;
@@ -11,15 +15,24 @@ interface AskQuestionModalProps {
   onSubmit: (payload: CrearPreguntaPayload) => Promise<void>;
 }
 
+const MAX_IMAGEN = 2 * 1024 * 1024;
+
 export function AskQuestionModal({ open, onClose, onSubmit }: AskQuestionModalProps) {
+  const { user } = useAuth();
   const [titulo, setTitulo] = useState('');
   const [contenido, setContenido] = useState('');
   const [carreraId, setCarreraId] = useState('');
   const [asignaturaId, setAsignaturaId] = useState('');
   const [tematicaGeneral, setTematicaGeneral] = useState(false);
   const [imagen, setImagen] = useState<File | null>(null);
-  const [imagenError, setImagenError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [intentoEnviar, setIntentoEnviar] = useState(false);
+
+  useEffect(() => {
+    if (open && !carreraId && user?.carreraId) setCarreraId(user.carreraId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   const carrerasQuery = useQuery({ queryKey: ['carreras'], queryFn: getCarreras });
   const asignaturasQuery = useQuery({
@@ -28,10 +41,36 @@ export function AskQuestionModal({ open, onClose, onSubmit }: AskQuestionModalPr
     enabled: !!carreraId && !tematicaGeneral,
   });
 
-  if (!open) return null;
+  const errores = {
+    titulo:
+      intentoEnviar && titulo.trim().length < 5 ? 'Escribe un título de al menos 5 caracteres' : undefined,
+    contenido:
+      intentoEnviar && contenido.trim().length < 10 ? 'Explica tu duda con al menos 10 caracteres' : undefined,
+    carrera: intentoEnviar && !carreraId ? 'Elige una carrera' : undefined,
+    asignatura: intentoEnviar && !tematicaGeneral && !asignaturaId ? 'Elige la asignatura o marca "Temática general"' : undefined,
+  };
+
+  function limpiar() {
+    setTitulo('');
+    setContenido('');
+    setCarreraId(user?.carreraId ?? '');
+    setAsignaturaId('');
+    setTematicaGeneral(false);
+    setImagen(null);
+    setError('');
+    setIntentoEnviar(false);
+  }
+
+  function cerrar() {
+    limpiar();
+    onClose();
+  }
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
+    setIntentoEnviar(true);
+    setError('');
+    if (titulo.trim().length < 5 || contenido.trim().length < 10 || !carreraId || (!tematicaGeneral && !asignaturaId)) return;
     setLoading(true);
     try {
       await onSubmit({
@@ -42,53 +81,66 @@ export function AskQuestionModal({ open, onClose, onSubmit }: AskQuestionModalPr
         tematicaGeneral,
         imagen: imagen ?? undefined,
       });
-      setImagen(null);
-      setTitulo('');
-      setContenido('');
-      setCarreraId('');
-      setAsignaturaId('');
-      setTematicaGeneral(false);
-      onClose();
+      cerrar();
+    } catch (err) {
+      setError(getApiErrorMessage(err, 'No se pudo publicar la pregunta'));
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-6 shadow-xl">
-        <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-xl font-bold">Hacer una pregunta</h2>
-          <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600">
-            ✕
-          </button>
-        </div>
+    <FormModal
+      open={open}
+      title="Hacer una pregunta"
+      subtitle="Mientras más clara sea tu pregunta, más rápido te van a responder."
+      icon={<IconChat className="h-5 w-5" />}
+      onClose={cerrar}
+      onSubmit={handleSubmit}
+      submitLabel="Publicar pregunta"
+      submitting={loading}
+      error={error}
+    >
+      <FormSection title="Tu pregunta">
+        <Input
+          label="Título"
+          name="titulo"
+          value={titulo}
+          onChange={(e) => setTitulo(e.target.value)}
+          maxLength={200}
+          placeholder="Ej: ¿Cómo configuro CORS en Spring Boot 3?"
+          hint="Resume tu duda en una frase."
+          error={errores.titulo}
+          required
+          autoFocus
+        />
+        <Textarea
+          label="Detalle"
+          id="contenido"
+          name="contenido"
+          value={contenido}
+          onChange={(e) => setContenido(e.target.value)}
+          rows={6}
+          maxLength={5000}
+          showCount
+          placeholder="Cuenta qué intentaste, qué esperabas y qué error o resultado obtuviste."
+          error={errores.contenido}
+          required
+        />
+      </FormSection>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <Input
-            label="Título"
-            name="titulo"
-            value={titulo}
-            onChange={(e) => setTitulo(e.target.value)}
-            maxLength={200}
-            required
-          />
-
-          <div className="space-y-1">
-            <label htmlFor="contenido" className="block text-sm font-medium text-gray-700">
-              Detalle de tu duda
-            </label>
-            <textarea
-              id="contenido"
-              value={contenido}
-              onChange={(e) => setContenido(e.target.value)}
-              rows={5}
-              maxLength={5000}
-              required
-              className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-duoc-yellow focus:ring-2 focus:ring-yellow-100"
-            />
-          </div>
-
+      <FormSection title="Tema">
+        <SwitchField
+          label="Temática general"
+          description="Actívalo si tu duda no es de una asignatura en particular (por ejemplo, práctica o titulación)."
+          checked={tematicaGeneral}
+          onChange={(v) => {
+            setTematicaGeneral(v);
+            if (v) setAsignaturaId('');
+          }}
+          icon={<IconGlobe className="h-4 w-4" />}
+        />
+        <div className="grid gap-4 sm:grid-cols-2">
           <Select
             label="Carrera"
             name="carreraId"
@@ -98,18 +150,9 @@ export function AskQuestionModal({ open, onClose, onSubmit }: AskQuestionModalPr
               setAsignaturaId('');
             }}
             options={(carrerasQuery.data ?? []).map((c) => ({ value: c.id, label: c.nombre }))}
+            error={errores.carrera}
             required
           />
-
-          <label className="flex items-center gap-2 text-sm text-gray-700">
-            <input
-              type="checkbox"
-              checked={tematicaGeneral}
-              onChange={(e) => setTematicaGeneral(e.target.checked)}
-            />
-            Es de temática general (no de una asignatura)
-          </label>
-
           {!tematicaGeneral && (
             <Select
               label="Asignatura"
@@ -119,44 +162,24 @@ export function AskQuestionModal({ open, onClose, onSubmit }: AskQuestionModalPr
               options={(asignaturasQuery.data ?? []).map((a) => ({ value: a.id, label: a.nombre }))}
               placeholder={carreraId ? 'Seleccionar asignatura...' : 'Primero elige una carrera'}
               disabled={!carreraId || asignaturasQuery.isLoading}
+              error={errores.asignatura}
               required
             />
           )}
+        </div>
+      </FormSection>
 
-          <div className="space-y-1">
-            <label htmlFor="imagen" className="block text-sm font-medium text-gray-700">
-              Imagen (opcional · JPG, PNG o WebP, máx. 2 MB)
-            </label>
-            <input
-              id="imagen"
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              onChange={(e) => {
-                const selected = e.target.files?.[0] ?? null;
-                if (selected && selected.size > 2 * 1024 * 1024) {
-                  setImagenError('La imagen no puede superar 2 MB');
-                  setImagen(null);
-                  e.target.value = '';
-                  return;
-                }
-                setImagenError('');
-                setImagen(selected);
-              }}
-              className="block w-full text-sm text-gray-600 file:mr-3 file:rounded-lg file:border-0 file:bg-gray-100 file:px-3 file:py-2 file:text-sm file:font-semibold hover:file:bg-gray-200"
-            />
-            {imagenError && <p className="text-sm text-red-600">{imagenError}</p>}
-          </div>
-
-          <div className="flex justify-end gap-3 pt-2">
-            <Button type="button" variant="secondary" onClick={onClose}>
-              Cancelar
-            </Button>
-            <Button type="submit" loading={loading}>
-              Publicar
-            </Button>
-          </div>
-        </form>
-      </div>
-    </div>
+      <FormSection title="Imagen" description="Opcional. Una captura del error o del ejercicio ayuda mucho.">
+        <FileDropzone
+          label="Adjuntar imagen"
+          file={imagen}
+          onChange={setImagen}
+          accept={['image/jpeg', 'image/png', 'image/webp']}
+          acceptLabel="JPG, PNG o WebP"
+          maxBytes={MAX_IMAGEN}
+          preview="image"
+        />
+      </FormSection>
+    </FormModal>
   );
 }

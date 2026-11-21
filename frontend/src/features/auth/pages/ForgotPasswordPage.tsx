@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react';
+import { AuthCard } from '@/features/auth/components/AuthCard';
 import { Link } from 'react-router-dom';
 import { forgotPassword } from '@/features/auth/services/authService';
 import { Button, FormAlert, Input } from '@/shared/components/ui/FormControls';
@@ -27,11 +28,7 @@ export function ForgotPasswordPage() {
   }
 
   return (
-    <div className="mx-auto max-w-md rounded-2xl bg-white p-8 shadow-sm">
-      <h1 className="mb-2 text-2xl font-bold">Recuperar contraseña</h1>
-      <p className="mb-6 text-sm text-gray-600">
-        Te enviaremos un enlace para restablecer tu contraseña.
-      </p>
+    <AuthCard title="Recuperar contraseña" subtitle="Te enviaremos un enlace para restablecer tu contraseña.">
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && <FormAlert message={error} />}
@@ -46,16 +43,16 @@ export function ForgotPasswordPage() {
           required
         />
 
-        <Button type="submit" className="w-full" loading={loading}>
+        <Button type="submit" size="lg" className="w-full" loading={loading}>
           Enviar enlace
         </Button>
       </form>
 
       <p className="mt-6 text-center text-sm text-gray-600">
-        <Link to="/login" className="font-semibold text-duoc-black hover:underline">
+        <Link to="/login" className="font-semibold text-gray-950 underline decoration-duoc-yellow decoration-2 underline-offset-4 hover:decoration-gray-950">
           Volver al inicio de sesión
         </Link>
       </p>
-    </div>
+    </AuthCard>
   );
 }

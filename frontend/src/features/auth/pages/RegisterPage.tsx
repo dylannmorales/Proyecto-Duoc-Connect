@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState, type FormEvent } from 'react';
+import { AuthCard } from '@/features/auth/components/AuthCard';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { getCarreras, getFormSecurityToken, getSedes } from '@/features/auth/services/authService';
@@ -57,9 +58,7 @@ export function RegisterPage() {
   }));
 
   return (
-    <div className="mx-auto max-w-lg rounded-2xl bg-white p-8 shadow-sm">
-      <h1 className="mb-2 text-2xl font-bold">Crear cuenta</h1>
-      <p className="mb-6 text-sm text-gray-600">Regístrate con tu correo @duocuc.cl</p>
+    <AuthCard title="Crear cuenta" subtitle="Regístrate con tu correo @duocuc.cl" wide>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && <FormAlert message={error} />}
@@ -79,6 +78,7 @@ export function RegisterPage() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="nombre@duocuc.cl"
+          hint="Solo correos institucionales @duocuc.cl."
           required
         />
 
@@ -89,6 +89,7 @@ export function RegisterPage() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           minLength={8}
+          hint="Mínimo 8 caracteres."
           required
         />
 
@@ -104,6 +105,7 @@ export function RegisterPage() {
           required
         />
 
+        <div className="grid gap-4 sm:grid-cols-2">
         <Select
           label="Sede"
           name="sedeId"
@@ -124,18 +126,19 @@ export function RegisterPage() {
           options={semestreOptions}
           required
         />
+        </div>
 
-        <Button type="submit" className="w-full" loading={loading}>
+        <Button type="submit" size="lg" className="w-full" loading={loading}>
           Crear cuenta
         </Button>
       </form>
 
       <p className="mt-6 text-center text-sm text-gray-600">
         ¿Ya tienes cuenta?{' '}
-        <Link to="/login" className="font-semibold text-duoc-black hover:underline">
+        <Link to="/login" className="font-semibold text-gray-950 underline decoration-duoc-yellow decoration-2 underline-offset-4 hover:decoration-gray-950">
           Inicia sesión
         </Link>
       </p>
-    </div>
+    </AuthCard>
   );
 }

@@ -1,6 +1,9 @@
 package cl.duoc.connect.infrastructure.persistence.repository;
 
 import cl.duoc.connect.infrastructure.persistence.entity.RespuestaEntity;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -29,6 +32,13 @@ public interface RespuestaJpaRepository extends JpaRepository<RespuestaEntity, U
             WHERE r.id = :id
             """)
     Optional<RespuestaEntity> findByIdWithDetails(@Param("id") UUID id);
+
+    @EntityGraph(attributePaths = {"usuario", "pregunta"})
+    @Query(value = "SELECT r FROM RespuestaEntity r",
+            countQuery = "SELECT COUNT(r) FROM RespuestaEntity r")
+    Page<RespuestaEntity> findAllForAdmin(Pageable pageable);
+
+    long countByPreguntaId(UUID preguntaId);
 
     /** Filas [preguntaId, totalRespuestas, respuestasAceptadas]. */
     @Query("""

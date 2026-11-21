@@ -42,9 +42,6 @@ public class PreguntaEntity {
     @JoinColumn(name = "asignatura_id")
     private AsignaturaEntity asignatura;
 
-    @Column(name = "tematica_general", nullable = false)
-    private Boolean tematicaGeneral;
-
     @Column(name = "imagen_url", length = 500)
     private String imagenUrl;
 
@@ -71,13 +68,15 @@ public class PreguntaEntity {
         if (votos == null) {
             votos = 0;
         }
-        if (tematicaGeneral == null) {
-            tematicaGeneral = false;
-        }
     }
 
     @PreUpdate
     void onUpdate() {
         updatedAt = Instant.now();
+    }
+
+    /** Una pregunta es de temática general cuando no tiene asignatura (no se guarda aparte, 3FN). */
+    public boolean isTematicaGeneral() {
+        return asignatura == null;
     }
 }

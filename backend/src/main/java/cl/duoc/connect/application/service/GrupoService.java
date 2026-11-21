@@ -82,8 +82,11 @@ public class GrupoService {
 
         AsignaturaEntity asignatura = null;
         if (request.getAsignaturaId() != null) {
-            asignatura = asignaturaRepository.findById(request.getAsignaturaId())
+            asignatura = asignaturaRepository.findByIdWithCarrera(request.getAsignaturaId())
                     .orElseThrow(() -> new BusinessException("ASIGNATURA_NOT_FOUND", "Asignatura no encontrada"));
+            if (!asignatura.getCarrera().getId().equals(carrera.getId())) {
+                throw new BusinessException("ASIGNATURA_INVALID", "La asignatura no pertenece a la carrera seleccionada");
+            }
         }
 
         GrupoEstudioEntity grupo = new GrupoEstudioEntity();
@@ -138,7 +141,7 @@ public class GrupoService {
     public GrupoResponse buscarPorCodigo(String codigo) {
         String codigoNormalizado = codigo.trim().toUpperCase();
         GrupoEstudioEntity grupo = grupoRepository.findByCodigoInvitacionIgnoreCase(codigoNormalizado)
-                .orElseThrow(() -> new BusinessException("INVALID_CODE", "Código de invitación inválido"));
+                .orElseThrow(() -> new BusinessException("CODE_NOT_FOUND", "Código de invitación inválido"));
 
         UUID usuarioId = getCurrentUserId();
         return toGrupoResponse(grupo, usuarioId);
@@ -148,7 +151,7 @@ public class GrupoService {
     public GrupoResponse unirsePorCodigo(String codigo) {
         String codigoNormalizado = codigo.trim().toUpperCase();
         GrupoEstudioEntity grupo = grupoRepository.findByCodigoInvitacionIgnoreCase(codigoNormalizado)
-                .orElseThrow(() -> new BusinessException("INVALID_CODE", "Código de invitación inválido"));
+                .orElseThrow(() -> new BusinessException("CODE_NOT_FOUND", "Código de invitación inválido"));
 
         UnirseGrupoRequest joinRequest = new UnirseGrupoRequest();
         joinRequest.setCodigoInvitacion(codigoNormalizado);
@@ -184,7 +187,7 @@ public class GrupoService {
     public GrupoResponse editarGrupo(UUID grupoId, UpdateGrupoRequest request) {
         UUID usuarioId = getCurrentUserId();
         GrupoEstudioEntity grupo = findGrupoWithDetails(grupoId);
-        validarAdminGrupo(grupoId, usuarioId);
+        validarPuedeEditar(grupo, usuarioId);
 
         CarreraEntity carrera = carreraRepository.findById(request.getCarreraId())
                 .orElseThrow(() -> new BusinessException("CARRERA_NOT_FOUND", "Carrera no encontrada"));
@@ -363,12 +366,14 @@ public class GrupoService {
         }
     }
 
-    private void validarAdminGrupo(UUID grupoId, UUID usuarioId) {
-        boolean esAdmin = miembroRepository.findByGrupoIdAndUsuarioId(grupoId, usuarioId)
-                .map(m -> m.getRol() == RolGrupo.ADMIN_GRUPO)
-                .orElse(false);
-        if (!esAdmin) {
-            throw new BusinessException("GROUP_ADMIN_REQUIRED", "Solo el administrador del grupo puede editarlo");
+    /** Puede editar quien creó el grupo (si sigue siendo integrante) o el administrador actual del grupo. */
+    private void validarPuedeEditar(GrupoEstudioEntity grupo, UUID usuarioId) {
+        var membresia = miembroRepository.findByGrupoIdAndUsuarioId(grupo.getId(), usuarioId);
+        boolean esAdmin = membresia.map(m -> m.getRol() == RolGrupo.ADMIN_GRUPO).orElse(false);
+        boolean esCreador = membresia.isPresent() && grupo.getCreador().getId().equals(usuarioId);
+        if (!esAdmin && !esCreador) {
+            throw new BusinessException("GROUP_ADMIN_REQUIRED",
+                    "Solo quien creó el grupo o su administrador pueden editarlo");
         }
     }
 

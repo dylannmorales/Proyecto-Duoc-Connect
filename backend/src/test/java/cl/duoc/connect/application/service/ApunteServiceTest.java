@@ -69,7 +69,6 @@ class ApunteServiceTest {
         apunte.setId(UUID.randomUUID());
         apunte.setTitulo("Resumen SQL");
         apunte.setUsuario(autor);
-        apunte.setCarrera(carrera);
         apunte.setAsignatura(TestData.asignatura("Base de Datos", carrera));
         apunte.setArchivoUrl("/uploads/apuntes/resumen.pdf");
         apunte.setNombreArchivo("resumen.pdf");

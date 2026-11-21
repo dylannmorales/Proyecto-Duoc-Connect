@@ -20,9 +20,18 @@ async function copyToClipboard(text: string) {
 interface CopyLinkButtonProps {
   link: string;
   className?: string;
+  label?: string;
+  copiedLabel?: string;
+  compact?: boolean;
 }
 
-export function CopyLinkButton({ link, className = '' }: CopyLinkButtonProps) {
+export function CopyLinkButton({
+  link,
+  className = '',
+  label = 'Copiar vínculo',
+  copiedLabel,
+  compact = false,
+}: CopyLinkButtonProps) {
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -38,10 +47,12 @@ export function CopyLinkButton({ link, className = '' }: CopyLinkButtonProps) {
         await copyToClipboard(link);
         setCopied(true);
       }}
-      className={`inline-flex items-center gap-2 rounded-full border border-gray-300 px-4 py-2 text-sm font-semibold transition hover:bg-gray-50 ${className}`}
+      className={`inline-flex items-center gap-2 rounded-full border border-gray-300 font-semibold transition hover:bg-gray-50 ${
+        compact ? 'px-3 py-1 text-xs' : 'px-4 py-2 text-sm'
+      } ${className}`}
     >
       <span aria-hidden="true">{copied ? '✓' : '🔗'}</span>
-      <span aria-live="polite">{copied ? 'Vínculo copiado' : 'Copiar vínculo'}</span>
+      <span aria-live="polite">{copied ? (copiedLabel ?? 'Copiado') : label}</span>
     </button>
   );
 }

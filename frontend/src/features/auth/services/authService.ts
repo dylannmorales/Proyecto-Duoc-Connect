@@ -3,6 +3,7 @@ import type {
   ApiResponse,
   AuthData,
   Carrera,
+  Habilidad,
   LoginPayload,
   MessageData,
   RegisterPayload,
@@ -72,5 +73,10 @@ export async function getCarreras() {
 
 export async function getSedes() {
   const { data } = await apiClient.get<ApiResponse<Sede[]>>('/catalogos/sedes');
+  return data.data;
+}
+
+export async function getHabilidades() {
+  const { data } = await apiClient.get<ApiResponse<Habilidad[]>>('/catalogos/habilidades');
   return data.data;
 }

@@ -1,6 +1,7 @@
+import { BackButton, BackNav } from '@/shared/components/ui/BackNav';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Link, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { NoteCard } from '@/features/notes/components/NoteCard';
 import { ShareNoteModal } from '@/features/notes/components/ShareNoteModal';
@@ -52,16 +53,19 @@ export function NoteDetailPage() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-4">
-      <Link to="/apuntes" className="text-sm font-semibold text-yellow-700 hover:underline">
-        ← Volver al banco de apuntes
-      </Link>
+      <BackNav to="/apuntes" parentLabel="Banco de apuntes" current={apunteQuery.data?.titulo} />
 
       {error && <FormAlert message={error} />}
 
       {apunteQuery.isLoading && <p className="text-gray-500">Cargando apunte...</p>}
 
       {apunteQuery.isError && (
-        <FormAlert message={getApiErrorMessage(apunteQuery.error, 'No se encontró el apunte')} />
+        <div className="card p-8 text-center">
+          <p className="text-lg font-semibold">{getApiErrorMessage(apunteQuery.error, 'No se encontró el apunte')}</p>
+          <div className="mt-5">
+            <BackButton to="/apuntes" label="Ir al banco de apuntes" />
+          </div>
+        </div>
       )}
 
       {apunteQuery.data && (

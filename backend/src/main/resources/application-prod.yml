@@ -11,3 +11,8 @@ management:
   endpoint:
     health:
       show-details: never
+
+app:
+  jwt:
+    # Sin valor por defecto: en prod el backend no arranca si falta JWT_SECRET.
+    secret: ${JWT_SECRET}

@@ -3,9 +3,11 @@ import type { ApiResponse } from '@/shared/types/api.types';
 import type {
   CreateGrupoPayload,
   Grupo,
+  InvitacionResultado,
   MensajeGrupo,
   MiembroGrupo,
   PageResponse,
+  SalidaGrupo,
 } from '@/features/groups/types/group.types';
 
 export async function searchGrupos(params: {
@@ -48,7 +50,8 @@ export async function joinGrupoPorCodigo(codigo: string) {
 }
 
 export async function leaveGrupo(id: string) {
-  await apiClient.delete(`/grupos/${id}/salir`);
+  const { data } = await apiClient.delete<ApiResponse<SalidaGrupo>>(`/grupos/${id}/salir`);
+  return data;
 }
 
 export async function getGrupoMiembros(id: string) {
@@ -77,4 +80,31 @@ export async function getAsignaturas(carreraId: string) {
     { params: { carreraId } },
   );
   return data.data;
+}
+
+export async function updateGrupo(id: string, payload: CreateGrupoPayload) {
+  const { data } = await apiClient.put<ApiResponse<Grupo>>(`/grupos/${id}`, payload);
+  return data.data;
+}
+
+export async function invitarAlGrupo(id: string, emails: string[]) {
+  const { data } = await apiClient.post<ApiResponse<InvitacionResultado[]>>(`/grupos/${id}/invitaciones`, {
+    emails,
+  });
+  return data.data;
+}
+
+export function buildGrupoInvitationLink(codigo: string) {
+  return `${window.location.origin}/grupos/unirse/${codigo}`;
+}
+
+/** Invita a los correos (si hay) y devuelve un texto breve con el resultado para mostrar al usuario. */
+export async function invitarYResumir(grupoId: string, emails: string[]): Promise<string | undefined> {
+  if (emails.length === 0) return undefined;
+  const resultados = await invitarAlGrupo(grupoId, emails);
+  const enviadas = resultados.filter((r) => r.estado === 'ENVIADA').length;
+  const yaMiembros = resultados.filter((r) => r.estado === 'YA_ES_MIEMBRO').length;
+  const partes = [enviadas === 1 ? '1 invitación enviada por correo' : `${enviadas} invitaciones enviadas por correo`];
+  if (yaMiembros > 0) partes.push(`${yaMiembros} ya ${yaMiembros === 1 ? 'era miembro' : 'eran miembros'}`);
+  return partes.join(' · ') + '.';
 }

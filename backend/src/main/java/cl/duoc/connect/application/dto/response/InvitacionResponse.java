@@ -7,6 +7,10 @@ public record InvitacionResponse(String email, String estado, String mensaje) {
         return new InvitacionResponse(email, "ENVIADA", "Invitación enviada");
     }
 
+    public static InvitacionResponse compartido(String email) {
+        return new InvitacionResponse(email, "ENVIADA", "Apunte compartido");
+    }
+
     public static InvitacionResponse yaEsMiembro(String email) {
         return new InvitacionResponse(email, "YA_ES_MIEMBRO", "Ya es miembro del grupo");
     }
