@@ -43,8 +43,18 @@ export function GroupChat({ grupoId }: GroupChatProps) {
   const mensajesQuery = useQuery({
     queryKey: ['grupo-mensajes', grupoId],
     queryFn: () => getGrupoMensajes(grupoId),
+    // El chat siempre se pide de nuevo al abrirlo: la caché de 5 minutos no sirve para mensajes.
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
     refetchInterval: connected ? false : 4000,
   });
+
+  // Al (re)conectar el WebSocket se recargan los mensajes que pudieron llegar mientras estaba desconectado.
+  const { refetch } = mensajesQuery;
+  useEffect(() => {
+    if (connected) void refetch();
+  }, [connected, refetch]);
 
   useEffect(() => {
     if (!mensajesQuery.data?.content) return;

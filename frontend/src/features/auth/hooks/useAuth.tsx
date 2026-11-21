@@ -13,6 +13,7 @@ import {
   register as registerRequest,
 } from '@/features/auth/services/authService';
 import { clearAuth } from '@/shared/lib/axios';
+import { queryClient } from '@/shared/lib/queryClient';
 import { registerSessionExpiredHandler } from '@/shared/lib/auth-session';
 import type { LoginPayload, RegisterPayload, Usuario } from '@/shared/types/api.types';
 
@@ -55,7 +56,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    registerSessionExpiredHandler(() => setUser(null));
+    registerSessionExpiredHandler(() => {
+      queryClient.clear();
+      setUser(null);
+    });
     return () => registerSessionExpiredHandler(null);
   }, []);
 
@@ -79,18 +83,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(async (payload: LoginPayload) => {
     const authData = await loginRequest(payload);
+    // Cada sesión parte sin datos en caché de la cuenta anterior (mensajes, grupos, notificaciones...).
+    queryClient.clear();
     persistAuth(authData.accessToken, authData.refreshToken, authData.user);
     setUser(authData.user);
   }, []);
 
   const register = useCallback(async (payload: RegisterPayload) => {
     const authData = await registerRequest(payload);
+    // Cada sesión parte sin datos en caché de la cuenta anterior (mensajes, grupos, notificaciones...).
+    queryClient.clear();
     persistAuth(authData.accessToken, authData.refreshToken, authData.user);
     setUser(authData.user);
   }, []);
 
   const logout = useCallback(() => {
     clearAuth();
+    queryClient.clear();
     setUser(null);
   }, []);
 
