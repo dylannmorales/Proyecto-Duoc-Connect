@@ -2,11 +2,13 @@ package cl.duoc.connect.application.service;
 
 import cl.duoc.connect.application.dto.response.AsignaturaResponse;
 import cl.duoc.connect.application.dto.response.CarreraResponse;
+import cl.duoc.connect.application.dto.response.HabilidadResponse;
 import cl.duoc.connect.application.dto.response.SedeResponse;
 import cl.duoc.connect.application.mapper.CatalogoMapper;
 import cl.duoc.connect.domain.exception.EntityNotFoundException;
 import cl.duoc.connect.infrastructure.persistence.repository.AsignaturaJpaRepository;
 import cl.duoc.connect.infrastructure.persistence.repository.CarreraJpaRepository;
+import cl.duoc.connect.infrastructure.persistence.repository.HabilidadJpaRepository;
 import cl.duoc.connect.infrastructure.persistence.repository.SedeJpaRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -23,6 +25,7 @@ public class CatalogoService {
     private final CarreraJpaRepository carreraRepository;
     private final SedeJpaRepository sedeRepository;
     private final AsignaturaJpaRepository asignaturaRepository;
+    private final HabilidadJpaRepository habilidadRepository;
     private final CatalogoMapper catalogoMapper;
 
     public List<CarreraResponse> listarCarreras() {
@@ -43,6 +46,12 @@ public class CatalogoService {
         }
 
         return asignaturaRepository.findByCarreraIdOrderByNombreAsc(carreraId).stream()
+                .map(catalogoMapper::toResponse)
+                .toList();
+    }
+
+    public List<HabilidadResponse> listarHabilidades() {
+        return habilidadRepository.findAll().stream()
                 .map(catalogoMapper::toResponse)
                 .toList();
     }

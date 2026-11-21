@@ -31,14 +31,14 @@ export function LeaveGroupModal({ grupo, open, leaving, onClose, onConfirm }: Le
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+      className="modal-overlay"
       role="alertdialog"
       aria-modal="true"
       aria-labelledby="leave-group-title"
       aria-describedby="leave-group-desc"
       onClick={() => !leaving && onClose()}
     >
-      <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
+      <div className="modal-panel max-w-md" onClick={(e) => e.stopPropagation()}>
         <h2 id="leave-group-title" className="text-xl font-bold">
           ¿Salir de “{grupo.nombre}”?
         </h2>

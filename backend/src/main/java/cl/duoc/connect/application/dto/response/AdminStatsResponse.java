@@ -16,4 +16,5 @@ public class AdminStatsResponse {
     private final long totalPreguntas;
     private final long totalRespuestas;
     private final long totalMensajes;
+    private final long buscandoCompanero;
 }

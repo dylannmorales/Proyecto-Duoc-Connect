@@ -3,6 +3,7 @@ package cl.duoc.connect.presentation.controller;
 import cl.duoc.connect.application.dto.response.ApiResponse;
 import cl.duoc.connect.application.dto.response.AsignaturaResponse;
 import cl.duoc.connect.application.dto.response.CarreraResponse;
+import cl.duoc.connect.application.dto.response.HabilidadResponse;
 import cl.duoc.connect.application.dto.response.SedeResponse;
 import cl.duoc.connect.application.dto.response.StatusResponse;
 import cl.duoc.connect.application.service.CatalogoService;
@@ -53,5 +54,11 @@ public class StatusController {
     public ApiResponse<List<AsignaturaResponse>> listarAsignaturas(
             @RequestParam UUID carreraId) {
         return ApiResponse.ok(catalogoService.listarAsignaturasPorCarrera(carreraId));
+    }
+
+    @GetMapping("/catalogos/habilidades")
+    @Operation(summary = "Listar habilidades")
+    public ApiResponse<List<HabilidadResponse>> listarHabilidades() {
+        return ApiResponse.ok(catalogoService.listarHabilidades());
     }
 }

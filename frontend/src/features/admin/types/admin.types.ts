@@ -1,4 +1,5 @@
 import type { RolUsuario } from '@/shared/types/api.types';
+import type { VisibilidadPerfil } from '@/features/companions/types/companion.types';
 import type { PageResponse } from '@/features/groups/types/group.types';
 
 export interface AdminStats {
@@ -9,6 +10,7 @@ export interface AdminStats {
   totalPreguntas: number;
   totalRespuestas: number;
   totalMensajes: number;
+  buscandoCompanero: number;
 }
 
 export interface AdminUsuario {
@@ -94,6 +96,17 @@ export interface AdminFotoPerfil {
   usuarioEmail: string;
   carreraNombre: string;
   fotoUrl: string;
+  updatedAt: string;
+}
+
+export interface AdminPerfilProyecto {
+  usuarioId: string;
+  usuarioNombre: string;
+  usuarioEmail: string;
+  carreraNombre: string;
+  bio: string | null;
+  buscandoCompanero: boolean;
+  visibilidad: VisibilidadPerfil;
   updatedAt: string;
 }
 

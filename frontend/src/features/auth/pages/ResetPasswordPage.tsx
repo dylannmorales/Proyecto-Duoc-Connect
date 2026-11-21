@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react';
+import { AuthCard } from '@/features/auth/components/AuthCard';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { resetPassword } from '@/features/auth/services/authService';
 import { Button, FormAlert, Input } from '@/shared/components/ui/FormControls';
@@ -44,9 +45,7 @@ export function ResetPasswordPage() {
   }
 
   return (
-    <div className="mx-auto max-w-md rounded-2xl bg-white p-8 shadow-sm">
-      <h1 className="mb-2 text-2xl font-bold">Nueva contraseña</h1>
-      <p className="mb-6 text-sm text-gray-600">Ingresa tu nueva contraseña.</p>
+    <AuthCard title="Nueva contraseña" subtitle="Ingresa tu nueva contraseña.">
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && <FormAlert message={error} />}
@@ -72,16 +71,16 @@ export function ResetPasswordPage() {
           required
         />
 
-        <Button type="submit" className="w-full" loading={loading}>
+        <Button type="submit" size="lg" className="w-full" loading={loading}>
           Guardar contraseña
         </Button>
       </form>
 
       <p className="mt-6 text-center text-sm text-gray-600">
-        <Link to="/login" className="font-semibold text-duoc-black hover:underline">
+        <Link to="/login" className="font-semibold text-gray-950 underline decoration-duoc-yellow decoration-2 underline-offset-4 hover:decoration-gray-950">
           Volver al inicio de sesión
         </Link>
       </p>
-    </div>
+    </AuthCard>
   );
 }

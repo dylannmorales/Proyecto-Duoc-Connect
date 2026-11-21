@@ -91,7 +91,7 @@ export function GroupChat({ grupoId }: GroupChatProps) {
   const displayError = error || loadError || socketError;
 
   return (
-    <div className="flex h-[500px] flex-col rounded-xl border border-gray-200 bg-white">
+    <div className="flex h-[500px] flex-col card">
       <div className="flex items-center justify-between border-b border-gray-100 px-4 py-2">
         <p className="text-xs font-medium text-gray-500">Chat del grupo</p>
         <span
@@ -131,7 +131,7 @@ export function GroupChat({ grupoId }: GroupChatProps) {
             placeholder="Escribe un mensaje..."
             maxLength={2000}
             disabled={sending}
-            className="flex-1 rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-duoc-yellow focus:ring-2 focus:ring-yellow-100 disabled:bg-gray-50"
+            className="field-input flex-1"
           />
           <Button type="submit" loading={sending}>
             Enviar

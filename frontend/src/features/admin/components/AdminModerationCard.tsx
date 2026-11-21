@@ -25,7 +25,7 @@ export function AdminModerationCard({
   deleteLabel = 'Eliminar',
 }: AdminModerationCardProps) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-4">
+    <div className="card p-4">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0 flex-1">
           <p className="font-medium text-gray-900">{title}</p>

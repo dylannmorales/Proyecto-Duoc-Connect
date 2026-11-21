@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { PageHeader } from '@/shared/components/ui/PageHeader';
+import { IconUsers } from '@/shared/components/ui/Icons';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { getCarreras } from '@/features/auth/services/authService';
@@ -78,23 +80,24 @@ export function GroupsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Grupos de estudio</h1>
-          <p className="text-gray-600">Crea o únete a grupos para colaborar con tus compañeros</p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Button variant="secondary" onClick={() => setShowJoinByCode(true)}>
-            Unirse con código
-          </Button>
-          <Button onClick={() => setShowCreate(true)}>Crear grupo</Button>
-        </div>
-      </div>
+      <PageHeader
+        title="Grupos de estudio"
+        description="Crea o únete a grupos para estudiar en equipo y coordinar por chat en tiempo real."
+        icon={<IconUsers className="h-6 w-6" />}
+        actions={
+          <>
+            <Button variant="secondary" onClick={() => setShowJoinByCode(true)}>
+              Unirse con código
+            </Button>
+            <Button onClick={() => setShowCreate(true)}>Crear grupo</Button>
+          </>
+        }
+      />
 
       {aviso && <FormAlert type="success" message={aviso} />}
       {error && <FormAlert message={error} />}
 
-      <div className="grid gap-4 rounded-xl border border-gray-200 bg-white p-4 md:grid-cols-3">
+      <div className="filter-bar grid gap-4 md:grid-cols-3">
         <Input
           label="Buscar"
           name="q"
@@ -121,7 +124,7 @@ export function GroupsPage() {
       {gruposQuery.isLoading && <p className="text-gray-500">Cargando grupos...</p>}
 
       {!gruposQuery.isLoading && grupos.length === 0 && (
-        <div className="rounded-xl border border-dashed border-gray-300 bg-white p-12 text-center">
+        <div className="empty-state">
           <p className="text-gray-600">No se encontraron grupos con esos filtros.</p>
           <Button className="mt-4" onClick={() => setShowCreate(true)}>
             Crear el primero

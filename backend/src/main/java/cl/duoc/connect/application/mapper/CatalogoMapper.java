@@ -2,9 +2,11 @@ package cl.duoc.connect.application.mapper;
 
 import cl.duoc.connect.application.dto.response.AsignaturaResponse;
 import cl.duoc.connect.application.dto.response.CarreraResponse;
+import cl.duoc.connect.application.dto.response.HabilidadResponse;
 import cl.duoc.connect.application.dto.response.SedeResponse;
 import cl.duoc.connect.infrastructure.persistence.entity.AsignaturaEntity;
 import cl.duoc.connect.infrastructure.persistence.entity.CarreraEntity;
+import cl.duoc.connect.infrastructure.persistence.entity.HabilidadEntity;
 import cl.duoc.connect.infrastructure.persistence.entity.SedeEntity;
 import org.springframework.stereotype.Component;
 
@@ -33,6 +35,13 @@ public class CatalogoMapper {
                 .nombre(entity.getNombre())
                 .codigo(entity.getCodigo())
                 .carreraId(entity.getCarrera().getId())
+                .build();
+    }
+
+    public HabilidadResponse toResponse(HabilidadEntity entity) {
+        return HabilidadResponse.builder()
+                .id(entity.getId())
+                .nombre(entity.getNombre())
                 .build();
     }
 }

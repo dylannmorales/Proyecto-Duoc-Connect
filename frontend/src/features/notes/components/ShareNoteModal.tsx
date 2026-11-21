@@ -28,18 +28,18 @@ export function ShareNoteModal({ apunte, onClose }: ShareNoteModalProps) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+      className="modal-overlay"
       role="dialog"
       aria-modal="true"
       aria-labelledby="share-note-title"
       onClick={onClose}
     >
-      <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
+      <div className="modal-panel max-w-md" onClick={(e) => e.stopPropagation()}>
         <div className="mb-4 flex items-start justify-between gap-4">
           <h2 id="share-note-title" className="text-xl font-bold">
             Compartir “{apunte.titulo}”
           </h2>
-          <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600" aria-label="Cerrar">
+          <button type="button" onClick={onClose} className="icon-btn" aria-label="Cerrar">
             ✕
           </button>
         </div>

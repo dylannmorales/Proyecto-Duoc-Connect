@@ -2,6 +2,7 @@ package cl.duoc.connect.presentation.controller;
 
 import cl.duoc.connect.application.dto.request.AdminUpdateApunteRequest;
 import cl.duoc.connect.application.dto.request.AdminUpdateGrupoRequest;
+import cl.duoc.connect.application.dto.request.AdminUpdatePerfilProyectoRequest;
 import cl.duoc.connect.application.dto.request.AdminUpdateMensajeRequest;
 import cl.duoc.connect.application.dto.request.AdminUpdatePreguntaRequest;
 import cl.duoc.connect.application.dto.request.AdminUpdateRespuestaRequest;
@@ -11,6 +12,7 @@ import cl.duoc.connect.application.dto.response.AdminApunteResponse;
 import cl.duoc.connect.application.dto.response.AdminFotoPerfilResponse;
 import cl.duoc.connect.application.dto.response.AdminGrupoResponse;
 import cl.duoc.connect.application.dto.response.AdminMensajeResponse;
+import cl.duoc.connect.application.dto.response.AdminPerfilProyectoResponse;
 import cl.duoc.connect.application.dto.response.AdminPreguntaResponse;
 import cl.duoc.connect.application.dto.response.AdminRespuestaResponse;
 import cl.duoc.connect.application.dto.response.AdminStatsResponse;
@@ -249,5 +251,28 @@ public class AdminController {
     @Operation(summary = "Eliminar foto de perfil de un usuario")
     public void eliminarFotoPerfil(@PathVariable UUID usuarioId) {
         adminService.eliminarFotoPerfil(usuarioId);
+    }
+
+    @GetMapping("/perfiles-proyecto")
+    @Operation(summary = "Listar perfiles de compañero para moderación")
+    public ApiResponse<PageResponse<AdminPerfilProyectoResponse>> listarPerfilesProyecto(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        return ApiResponse.ok(adminService.listarPerfilesProyecto(page, size));
+    }
+
+    @PatchMapping("/perfiles-proyecto/{usuarioId}")
+    @Operation(summary = "Editar perfil de compañero")
+    public ApiResponse<AdminPerfilProyectoResponse> actualizarPerfilProyecto(
+            @PathVariable UUID usuarioId,
+            @Valid @RequestBody AdminUpdatePerfilProyectoRequest request) {
+        return ApiResponse.ok(adminService.actualizarPerfilProyecto(usuarioId, request), "Perfil actualizado");
+    }
+
+    @DeleteMapping("/perfiles-proyecto/{usuarioId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(summary = "Eliminar perfil de compañero")
+    public void eliminarPerfilProyecto(@PathVariable UUID usuarioId) {
+        adminService.eliminarPerfilProyecto(usuarioId);
     }
 }

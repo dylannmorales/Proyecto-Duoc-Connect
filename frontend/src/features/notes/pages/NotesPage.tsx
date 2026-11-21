@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { PageHeader } from '@/shared/components/ui/PageHeader';
+import { IconBook } from '@/shared/components/ui/Icons';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { getCarreras } from '@/features/auth/services/authService';
@@ -85,13 +87,16 @@ export function NotesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Banco de apuntes</h1>
-          <p className="text-gray-600">Comparte, descarga y valora material académico en PDF</p>
-        </div>
-        <Button onClick={() => setShowUpload(true)}>Subir apunte</Button>
-      </div>
+      <PageHeader
+        title="Banco de apuntes"
+        description="Comparte, descarga y valora material académico en PDF."
+        icon={<IconBook className="h-6 w-6" />}
+        actions={
+          <>
+            <Button onClick={() => setShowUpload(true)}>Subir apunte</Button>
+          </>
+        }
+      />
 
       {error && <FormAlert message={error} />}
 
@@ -99,7 +104,7 @@ export function NotesPage() {
         <FormAlert message={getApiErrorMessage(apuntesQuery.error, 'No se pudieron cargar los apuntes')} />
       )}
 
-      <div className="grid gap-4 rounded-xl border border-gray-200 bg-white p-4 md:grid-cols-3">
+      <div className="filter-bar grid gap-4 md:grid-cols-3">
         <Input
           label="Buscar"
           name="q"
@@ -139,7 +144,7 @@ export function NotesPage() {
       {apuntesQuery.isLoading && <p className="text-gray-500">Cargando apuntes...</p>}
 
       {!apuntesQuery.isLoading && !apuntesQuery.isError && apuntes.length === 0 && (
-        <div className="rounded-xl border border-dashed border-gray-300 bg-white p-12 text-center">
+        <div className="empty-state">
           <p className="text-gray-600">No se encontraron apuntes con esos filtros.</p>
           <Button className="mt-4" onClick={() => setShowUpload(true)}>
             Subir el primero

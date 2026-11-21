@@ -5,6 +5,7 @@ import { ForgotPasswordPage } from '@/features/auth/pages/ForgotPasswordPage';
 import { LoginPage } from '@/features/auth/pages/LoginPage';
 import { RegisterPage } from '@/features/auth/pages/RegisterPage';
 import { ResetPasswordPage } from '@/features/auth/pages/ResetPasswordPage';
+import { CompanionsPage } from '@/features/companions/pages/CompanionsPage';
 import { ForumPage } from '@/features/forum/pages/ForumPage';
 import { QuestionDetailPage } from '@/features/forum/pages/QuestionDetailPage';
 import { GroupDetailPage } from '@/features/groups/pages/GroupDetailPage';
@@ -111,6 +112,14 @@ export function AppRoutes() {
             }
           />
 
+          <Route
+            path="companeros"
+            element={
+              <ProtectedRoute>
+                <CompanionsPage />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="perfil"
             element={

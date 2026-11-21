@@ -1,10 +1,12 @@
 import { apiClient } from '@/shared/lib/axios';
 import type { ApiResponse } from '@/shared/types/api.types';
+import type { VisibilidadPerfil } from '@/features/companions/types/companion.types';
 import type {
   AdminApunte,
   AdminFotoPerfil,
   AdminGrupo,
   AdminMensaje,
+  AdminPerfilProyecto,
   AdminPregunta,
   AdminRespuesta,
   AdminStats,
@@ -171,4 +173,30 @@ export async function listAdminFotosPerfil(
 
 export async function deleteAdminFotoPerfil(usuarioId: string): Promise<void> {
   await apiClient.delete(`/admin/fotos-perfil/${usuarioId}`);
+}
+
+export async function listAdminPerfilesProyecto(
+  page = 0,
+  size = 20,
+): Promise<PageResponse<AdminPerfilProyecto>> {
+  const { data } = await apiClient.get<ApiResponse<PageResponse<AdminPerfilProyecto>>>(
+    '/admin/perfiles-proyecto',
+    { params: { page, size } },
+  );
+  return data.data;
+}
+
+export async function updateAdminPerfilProyecto(
+  usuarioId: string,
+  payload: { bio?: string; buscandoCompanero?: boolean; visibilidad?: VisibilidadPerfil },
+): Promise<AdminPerfilProyecto> {
+  const { data } = await apiClient.patch<ApiResponse<AdminPerfilProyecto>>(
+    `/admin/perfiles-proyecto/${usuarioId}`,
+    payload,
+  );
+  return data.data;
+}
+
+export async function deleteAdminPerfilProyecto(usuarioId: string): Promise<void> {
+  await apiClient.delete(`/admin/perfiles-proyecto/${usuarioId}`);
 }

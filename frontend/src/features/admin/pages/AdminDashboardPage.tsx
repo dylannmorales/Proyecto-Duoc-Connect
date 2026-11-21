@@ -1,4 +1,6 @@
 import { useState, type ReactNode } from 'react';
+import { PageHeader } from '@/shared/components/ui/PageHeader';
+import { IconShield } from '@/shared/components/ui/Icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AdminEditModal, type EditItem } from '@/features/admin/components/AdminEditModal';
 import { AdminModerationCard } from '@/features/admin/components/AdminModerationCard';
@@ -8,6 +10,7 @@ import {
   deleteAdminFotoPerfil,
   deleteAdminGrupo,
   deleteAdminMensaje,
+  deleteAdminPerfilProyecto,
   deleteAdminPregunta,
   deleteAdminRespuesta,
   getAdminStats,
@@ -15,12 +18,14 @@ import {
   listAdminFotosPerfil,
   listAdminGrupos,
   listAdminMensajes,
+  listAdminPerfilesProyecto,
   listAdminPreguntas,
   listAdminRespuestas,
   listAdminUsuarios,
   updateAdminApunte,
   updateAdminGrupo,
   updateAdminMensaje,
+  updateAdminPerfilProyecto,
   updateAdminPregunta,
   updateAdminRespuesta,
   updateUsuarioEstado,
@@ -30,6 +35,7 @@ import type {
   AdminFotoPerfil,
   PageResponse,
 } from '@/features/admin/types/admin.types';
+import type { VisibilidadPerfil } from '@/features/companions/types/companion.types';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { Button, FormAlert } from '@/shared/components/ui/FormControls';
 import { getApiErrorMessage } from '@/shared/utils/errors';
@@ -43,7 +49,8 @@ type AdminTab =
   | 'respuestas'
   | 'grupos'
   | 'mensajes'
-  | 'fotos';
+  | 'fotos'
+  | 'perfiles';
 
 type ViewItem = EditItem | { type: 'foto'; data: AdminFotoPerfil };
 
@@ -101,6 +108,11 @@ export function AdminDashboardPage() {
     queryKey: ['admin', 'fotos', page],
     queryFn: () => listAdminFotosPerfil(page),
     enabled: tab === 'fotos',
+  });
+  const perfilesQuery = useQuery({
+    queryKey: ['admin', 'perfiles', page],
+    queryFn: () => listAdminPerfilesProyecto(page),
+    enabled: tab === 'perfiles',
   });
 
   const rolMutation = useMutation({
@@ -176,6 +188,15 @@ export function AdminDashboardPage() {
     onError: (err) => setError(getApiErrorMessage(err)),
   });
 
+  const deletePerfilMutation = useMutation({
+    mutationFn: deleteAdminPerfilProyecto,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'perfiles'] });
+      invalidateStats();
+    },
+    onError: (err) => setError(getApiErrorMessage(err)),
+  });
+
   function changeTab(next: AdminTab) {
     setTab(next);
     setPage(0);
@@ -216,6 +237,15 @@ export function AdminDashboardPage() {
           await updateAdminMensaje(editItem.data.id, { contenido: String(payload.contenido) });
           queryClient.invalidateQueries({ queryKey: ['admin', 'mensajes'] });
           break;
+        case 'perfilProyecto':
+          await updateAdminPerfilProyecto(editItem.data.usuarioId, {
+            bio: String(payload.bio ?? ''),
+            buscandoCompanero: Boolean(payload.buscandoCompanero),
+            visibilidad: payload.visibilidad as VisibilidadPerfil,
+          });
+          queryClient.invalidateQueries({ queryKey: ['admin', 'perfiles'] });
+          invalidateStats();
+          break;
       }
       setEditItem(null);
     } catch (err) {
@@ -233,6 +263,7 @@ export function AdminDashboardPage() {
     { id: 'grupos', label: 'Grupos' },
     { id: 'mensajes', label: 'Mensajes' },
     { id: 'fotos', label: 'Fotos' },
+    { id: 'perfiles', label: 'Perfiles' },
   ];
 
   const currentPageData: PageResponse<unknown> | null | undefined =
@@ -250,16 +281,17 @@ export function AdminDashboardPage() {
                 ? mensajesQuery.data
                 : tab === 'fotos'
                   ? fotosQuery.data
-                  : null;
+                  : tab === 'perfiles'
+                    ? perfilesQuery.data
+                    : null;
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Panel de administración</h1>
-        <p className="mt-1 text-sm text-gray-600">
-          Gestiona usuarios y roles, y modera el contenido de la plataforma: apuntes, foro, grupos, chat y fotos de perfil.
-        </p>
-      </div>
+      <PageHeader
+        title="Panel de administración"
+        description="Gestiona usuarios y roles, y modera el contenido: apuntes, foro, grupos, chat, fotos y perfiles de compañero."
+        icon={<IconShield className="h-6 w-6" />}
+      />
 
       {error && <FormAlert message={error} />}
 
@@ -291,13 +323,14 @@ export function AdminDashboardPage() {
               <StatCard label="Preguntas" value={statsQuery.data.totalPreguntas} />
               <StatCard label="Mensajes chat" value={statsQuery.data.totalMensajes} />
               <StatCard label="Respuestas" value={statsQuery.data.totalRespuestas} />
+              <StatCard label="Buscando compañero" value={statsQuery.data.buscandoCompanero} />
             </>
           )}
         </div>
       )}
 
       {tab === 'usuarios' && (
-        <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white">
+        <div className="overflow-x-auto card">
           <table className="min-w-full text-left text-sm">
             <thead className="border-b bg-gray-50 text-xs uppercase text-gray-500">
               <tr>
@@ -481,7 +514,7 @@ export function AdminDashboardPage() {
           loading={fotosQuery.isLoading}
           empty="No hay fotos de perfil subidas."
           items={fotosQuery.data?.content.map((foto) => (
-            <div key={foto.usuarioId} className="rounded-xl border border-gray-200 bg-white p-4">
+            <div key={foto.usuarioId} className="card p-4">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-4">
                   <img
@@ -519,6 +552,27 @@ export function AdminDashboardPage() {
         />
       )}
 
+      {tab === 'perfiles' && (
+        <ModerationList
+          loading={perfilesQuery.isLoading}
+          empty="No hay perfiles de compañero."
+          items={perfilesQuery.data?.content.map((perfil) => (
+            <AdminModerationCard
+              key={perfil.usuarioId}
+              title={perfil.usuarioNombre}
+              subtitle={perfil.usuarioEmail}
+              meta={`${perfil.carreraNombre} · ${perfil.buscandoCompanero ? 'Buscando' : 'No busca'} · ${perfil.visibilidad} · ${formatDate(perfil.updatedAt)}`}
+              onView={() => setViewItem({ type: 'perfilProyecto', data: perfil })}
+              onEdit={() => setEditItem({ type: 'perfilProyecto', data: perfil })}
+              onDelete={() => confirmDelete('¿Eliminar este perfil de compañero?', () => {
+                setError('');
+                deletePerfilMutation.mutate(perfil.usuarioId);
+              })}
+            />
+          ))}
+        />
+      )}
+
       {currentPageData && currentPageData.totalPages > 1 && (
         <Pagination page={page} data={currentPageData} onPageChange={setPage} />
       )}
@@ -527,7 +581,7 @@ export function AdminDashboardPage() {
 
       {editItem && (
         <AdminEditModal
-          key={editItem.data.id}
+          key={editItem.type === 'perfilProyecto' ? editItem.data.usuarioId : editItem.data.id}
           item={editItem}
           open
           onClose={() => setEditItem(null)}
@@ -598,14 +652,16 @@ function AdminViewModal({ item, onClose }: { item: ViewItem; onClose: () => void
             ? 'Detalle del grupo'
             : item.type === 'mensaje'
               ? 'Detalle del mensaje'
-              : 'Foto de perfil';
+              : item.type === 'foto'
+                ? 'Foto de perfil'
+                : 'Perfil de compañero';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-6 shadow-xl">
+    <div className="modal-overlay">
+      <div className="modal-panel max-w-2xl">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-xl font-bold">{title}</h2>
-          <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600">
+          <button type="button" onClick={onClose} className="icon-btn">
             ✕
           </button>
         </div>
@@ -678,6 +734,17 @@ function AdminViewModal({ item, onClose }: { item: ViewItem; onClose: () => void
           </div>
         )}
 
+        {item.type === 'perfilProyecto' && (
+          <dl className="space-y-3 text-sm">
+            <DetailRow label="Usuario" value={`${item.data.usuarioNombre} (${item.data.usuarioEmail})`} />
+            <DetailRow label="Carrera" value={item.data.carreraNombre} />
+            <DetailRow label="Bio" value={item.data.bio ?? '—'} multiline />
+            <DetailRow label="Buscando compañero" value={item.data.buscandoCompanero ? 'Sí' : 'No'} />
+            <DetailRow label="Visibilidad" value={item.data.visibilidad} />
+            <DetailRow label="Actualizado" value={formatDate(item.data.updatedAt)} />
+          </dl>
+        )}
+
         <div className="mt-6 flex justify-end">
           <Button variant="secondary" onClick={onClose}>
             Cerrar
@@ -707,7 +774,7 @@ function DetailRow({
 
 function StatCard({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+    <div className="card p-5">
       <p className="text-sm text-gray-500">{label}</p>
       <p className="mt-2 text-3xl font-bold text-gray-900">{value}</p>
     </div>

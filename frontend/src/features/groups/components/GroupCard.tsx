@@ -8,7 +8,7 @@ interface GroupCardProps {
 
 export function GroupCard({ grupo, onJoin }: GroupCardProps) {
   return (
-    <article className="flex flex-col rounded-xl border border-gray-200 bg-white p-5 transition hover:border-duoc-yellow hover:shadow-md">
+    <article className="flex flex-col card card-hover p-5">
       <div className="mb-3 flex items-start justify-between gap-3">
         <div>
           <h3 className="font-semibold">{grupo.nombre}</h3>

@@ -11,7 +11,7 @@ export function QuestionCard({ pregunta }: QuestionCardProps) {
   return (
     <Link
       to={`/foro/${pregunta.id}`}
-      className="flex gap-4 rounded-xl border border-gray-200 bg-white p-5 transition hover:border-duoc-yellow hover:shadow-md"
+      className="flex gap-4 card card-hover p-5"
     >
       <div className="flex w-14 shrink-0 flex-col items-center text-center text-sm">
         <span className="text-lg font-bold">{pregunta.votos}</span>

@@ -4,6 +4,65 @@
 
 @layer base {
   body {
-    @apply bg-duoc-gray text-duoc-black font-sans antialiased;
+    @apply bg-duoc-gray font-sans text-duoc-black antialiased;
+  }
+
+  ::selection {
+    @apply bg-duoc-yellow text-duoc-black;
+  }
+
+  :focus-visible {
+    @apply outline-none ring-4 ring-duoc-yellow/40;
+  }
+}
+
+@layer components {
+  /* Superficies */
+  .card {
+    @apply rounded-2xl border border-gray-200/80 bg-white shadow-card;
+  }
+
+  .card-hover {
+    @apply transition duration-200 hover:-translate-y-0.5 hover:border-duoc-yellow hover:shadow-lift;
+  }
+
+  /* Formularios */
+  .field-label {
+    @apply mb-1.5 block text-sm font-medium text-gray-800;
+  }
+
+  .field-input {
+    @apply block w-full rounded-xl border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-900 shadow-sm outline-none transition placeholder:text-gray-400 hover:border-gray-400 focus:border-yellow-500 focus:ring-4 focus:ring-duoc-yellow/30 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500;
+  }
+
+  .field-input-error {
+    @apply border-red-400 hover:border-red-400 focus:border-red-500 focus:ring-red-100;
+  }
+
+  .checkbox {
+    @apply h-4 w-4 rounded border-gray-300 text-yellow-500 accent-yellow-400 focus:ring-duoc-yellow;
+  }
+
+  /* Modales */
+  .modal-overlay {
+    @apply fixed inset-0 z-50 flex items-center justify-center bg-gray-950/50 p-4 backdrop-blur-sm;
+  }
+
+  .modal-panel {
+    @apply max-h-[90vh] w-full overflow-y-auto rounded-3xl bg-white p-6 shadow-2xl ring-1 ring-black/5 sm:p-7;
+  }
+
+  .icon-btn {
+    @apply inline-flex h-9 w-9 items-center justify-center rounded-full text-gray-400 transition hover:bg-gray-100 hover:text-gray-700;
+  }
+
+  /* Estados vacíos */
+  .empty-state {
+    @apply rounded-2xl border border-dashed border-gray-300 bg-white/60 p-12 text-center text-gray-600;
+  }
+
+  /* Barra de filtros */
+  .filter-bar {
+    @apply rounded-2xl border border-gray-200/80 bg-white p-4 shadow-card;
   }
 }

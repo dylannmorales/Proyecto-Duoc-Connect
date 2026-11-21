@@ -77,11 +77,11 @@ export function CreateGroupModal({ open, onClose, onSubmit, grupo }: CreateGroup
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-6 shadow-xl">
+    <div className="modal-overlay">
+      <div className="modal-panel max-w-lg">
         <div className="mb-6 flex items-center justify-between">
           <h2 className="text-xl font-bold">{editando ? 'Editar grupo de estudio' : 'Crear grupo de estudio'}</h2>
-          <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600">
+          <button type="button" onClick={onClose} className="icon-btn">
             ✕
           </button>
         </div>
@@ -90,7 +90,7 @@ export function CreateGroupModal({ open, onClose, onSubmit, grupo }: CreateGroup
           <Input label="Nombre del grupo" name="nombre" value={nombre} onChange={(e) => setNombre(e.target.value)} required />
 
           <div className="space-y-1">
-            <label htmlFor="descripcion" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="descripcion" className="field-label">
               Descripción
             </label>
             <textarea
@@ -98,7 +98,7 @@ export function CreateGroupModal({ open, onClose, onSubmit, grupo }: CreateGroup
               value={descripcion}
               onChange={(e) => setDescripcion(e.target.value)}
               rows={3}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-duoc-yellow focus:ring-2 focus:ring-yellow-100"
+              className="field-input"
             />
           </div>
 
@@ -142,7 +142,7 @@ export function CreateGroupModal({ open, onClose, onSubmit, grupo }: CreateGroup
               type="checkbox"
               checked={privado}
               onChange={(e) => setPrivado(e.target.checked)}
-              className="rounded border-gray-300"
+              className="checkbox"
             />
             Grupo privado (requiere código de invitación)
           </label>

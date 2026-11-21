@@ -77,7 +77,7 @@ export function NotificationBell() {
             aria-label="Cerrar notificaciones"
             onClick={() => setOpen(false)}
           />
-          <div className="absolute right-0 z-50 mt-2 w-80 rounded-xl border border-gray-200 bg-white shadow-lg">
+          <div className="absolute right-0 z-50 mt-2 w-80 card shadow-lg">
             <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
               <p className="font-semibold">Notificaciones</p>
               {unread > 0 && (

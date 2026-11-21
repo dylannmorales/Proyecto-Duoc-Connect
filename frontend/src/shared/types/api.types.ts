@@ -83,3 +83,8 @@ export interface UpdateProfilePayload {
 export interface MessageData {
   message: string;
 }
+
+export interface Habilidad {
+  id: string;
+  nombre: string;
+}

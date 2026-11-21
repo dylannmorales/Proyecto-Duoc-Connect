@@ -36,7 +36,7 @@ export function NoteCard({ apunte, esPropio, onDownload, onRate, onShare, detall
   }
 
   return (
-    <article className="flex flex-col rounded-xl border border-gray-200 bg-white p-5 transition hover:border-duoc-yellow hover:shadow-md">
+    <article className="flex flex-col card card-hover p-5">
       <div className="mb-2 flex items-start gap-3">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-red-50 text-xs font-bold text-red-600">
           PDF

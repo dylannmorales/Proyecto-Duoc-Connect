@@ -35,6 +35,11 @@ import cl.duoc.connect.infrastructure.persistence.repository.PreguntaJpaReposito
 import cl.duoc.connect.infrastructure.persistence.repository.RespuestaJpaRepository;
 import cl.duoc.connect.infrastructure.persistence.repository.UsuarioJpaRepository;
 import cl.duoc.connect.infrastructure.security.UserPrincipal;
+import cl.duoc.connect.application.dto.request.AdminUpdatePerfilProyectoRequest;
+import cl.duoc.connect.application.dto.response.AdminPerfilProyectoResponse;
+import cl.duoc.connect.domain.enums.VisibilidadPerfil;
+import cl.duoc.connect.infrastructure.persistence.entity.PerfilProyectoEntity;
+import cl.duoc.connect.infrastructure.persistence.repository.PerfilProyectoJpaRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -58,6 +63,7 @@ public class AdminService {
     private final GrupoEstudioJpaRepository grupoRepository;
     private final GrupoMiembroJpaRepository miembroRepository;
     private final MensajeGrupoJpaRepository mensajeRepository;
+    private final PerfilProyectoJpaRepository perfilProyectoRepository;
     private final FileStoragePort fileStoragePort;
 
     @Transactional(readOnly = true)
@@ -70,6 +76,7 @@ public class AdminService {
                 .totalPreguntas(preguntaRepository.count())
                 .totalRespuestas(respuestaRepository.count())
                 .totalMensajes(mensajeRepository.count())
+                .buscandoCompanero(perfilProyectoRepository.countByBuscandoCompaneroTrue())
                 .build();
     }
 
@@ -420,6 +427,55 @@ public class AdminService {
                 .carreraNombre(usuario.getCarrera().getNombre())
                 .fotoUrl(usuario.getFotoUrl())
                 .updatedAt(usuario.getUpdatedAt())
+                .build();
+    }
+
+    @Transactional(readOnly = true)
+    public PageResponse<AdminPerfilProyectoResponse> listarPerfilesProyecto(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "updatedAt"));
+        Page<PerfilProyectoEntity> result = perfilProyectoRepository.findAllForAdmin(pageable);
+        return toPageResponse(result.map(this::toAdminPerfilProyecto));
+    }
+
+    @Transactional
+    public AdminPerfilProyectoResponse actualizarPerfilProyecto(
+            UUID usuarioId,
+            AdminUpdatePerfilProyectoRequest request) {
+        PerfilProyectoEntity perfil = perfilProyectoRepository.findByUsuarioIdForAdmin(usuarioId)
+                .orElseThrow(() -> new EntityNotFoundException("Perfil de proyecto no encontrado"));
+
+        if (request.getBio() != null) {
+            perfil.setBio(StringUtils.hasText(request.getBio()) ? request.getBio().trim() : null);
+        }
+        if (request.getBuscandoCompanero() != null) {
+            perfil.setBuscandoCompanero(request.getBuscandoCompanero());
+        }
+        if (request.getVisibilidad() != null) {
+            perfil.setVisibilidad(request.getVisibilidad());
+        }
+
+        return toAdminPerfilProyecto(perfilProyectoRepository.save(perfil));
+    }
+
+    @Transactional
+    public void eliminarPerfilProyecto(UUID usuarioId) {
+        PerfilProyectoEntity perfil = perfilProyectoRepository.findByUsuarioIdForAdmin(usuarioId)
+                .orElseThrow(() -> new EntityNotFoundException("Perfil de proyecto no encontrado"));
+
+        perfilProyectoRepository.delete(perfil);
+    }
+
+    private AdminPerfilProyectoResponse toAdminPerfilProyecto(PerfilProyectoEntity perfil) {
+        UsuarioEntity usuario = perfil.getUsuario();
+        return AdminPerfilProyectoResponse.builder()
+                .usuarioId(usuario.getId())
+                .usuarioNombre(usuario.getNombre())
+                .usuarioEmail(usuario.getEmail())
+                .carreraNombre(usuario.getCarrera().getNombre())
+                .bio(perfil.getBio())
+                .buscandoCompanero(Boolean.TRUE.equals(perfil.getBuscandoCompanero()))
+                .visibilidad(perfil.getVisibilidad() != null ? perfil.getVisibilidad() : VisibilidadPerfil.SOLO_CARRERA)
+                .updatedAt(perfil.getUpdatedAt())
                 .build();
     }
 

@@ -51,8 +51,8 @@ export function JoinByCodeModal({ open, onClose, onPreview, onJoin }: JoinByCode
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+    <div className="modal-overlay">
+      <div className="modal-panel max-w-md">
         <h2 className="mb-2 text-xl font-bold">Unirse con código</h2>
         <p className="mb-4 text-sm text-gray-600">
           Ingresa el código de invitación para acceder a grupos públicos o privados.

@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { PageHeader } from '@/shared/components/ui/PageHeader';
+import { IconChat } from '@/shared/components/ui/Icons';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { getCarreras } from '@/features/auth/services/authService';
@@ -62,13 +64,16 @@ export function ForumPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Foro académico</h1>
-          <p className="text-gray-600">Resuelve dudas con ayuda de tus compañeros</p>
-        </div>
-        <Button onClick={() => setShowAsk(true)}>Hacer una pregunta</Button>
-      </div>
+      <PageHeader
+        title="Foro académico"
+        description="Pregunta, responde y vota para destacar las mejores soluciones."
+        icon={<IconChat className="h-6 w-6" />}
+        actions={
+          <>
+            <Button onClick={() => setShowAsk(true)}>Hacer una pregunta</Button>
+          </>
+        }
+      />
 
       {error && <FormAlert message={error} />}
 
@@ -76,7 +81,7 @@ export function ForumPage() {
         <FormAlert message={getApiErrorMessage(preguntasQuery.error, 'No se pudieron cargar las preguntas')} />
       )}
 
-      <div className="grid gap-4 rounded-xl border border-gray-200 bg-white p-4 md:grid-cols-2 lg:grid-cols-5">
+      <div className="filter-bar grid gap-4 md:grid-cols-2 lg:grid-cols-5">
         <Input
           label="Buscar"
           name="q"
@@ -141,7 +146,7 @@ export function ForumPage() {
       {preguntasQuery.isLoading && <p className="text-gray-500">Cargando preguntas...</p>}
 
       {!preguntasQuery.isLoading && !preguntasQuery.isError && preguntas.length === 0 && (
-        <div className="rounded-xl border border-dashed border-gray-300 bg-white p-12 text-center">
+        <div className="empty-state">
           <p className="text-gray-600">No se encontraron preguntas con esos filtros.</p>
           <Button className="mt-4" onClick={() => setShowAsk(true)}>
             Hacer la primera pregunta
