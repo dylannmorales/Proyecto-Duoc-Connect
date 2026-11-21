@@ -7,6 +7,7 @@ const navItems = [
   { to: '/', label: 'Inicio' },
   { to: '/grupos', label: 'Grupos' },
   { to: '/apuntes', label: 'Apuntes' },
+  { to: '/foro', label: 'Foro' },
 ];
 
 export function Navbar() {

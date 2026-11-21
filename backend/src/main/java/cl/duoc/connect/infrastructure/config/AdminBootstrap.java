@@ -9,11 +9,13 @@ import cl.duoc.connect.infrastructure.persistence.repository.SedeJpaRepository;
 import cl.duoc.connect.infrastructure.persistence.repository.UsuarioJpaRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 @Slf4j
 @Component
@@ -21,8 +23,11 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class AdminBootstrap implements ApplicationRunner {
 
-    private static final String ADMIN_EMAIL = "admin@duocuc.cl";
-    private static final String ADMIN_PASSWORD = "Admin1234";
+    @Value("${app.admin.email:admin@duocuc.cl}")
+    private String adminEmail;
+
+    @Value("${app.admin.password:}")
+    private String adminPassword;
 
     private final UsuarioJpaRepository usuarioRepository;
     private final CarreraJpaRepository carreraRepository;
@@ -31,7 +36,11 @@ public class AdminBootstrap implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) {
-        if (usuarioRepository.existsByEmailIgnoreCase(ADMIN_EMAIL)) {
+        if (usuarioRepository.existsByEmailIgnoreCase(adminEmail)) {
+            return;
+        }
+        if (!StringUtils.hasText(adminPassword)) {
+            log.warn("No se creó el administrador inicial: define ADMIN_PASSWORD (y opcionalmente ADMIN_EMAIL)");
             return;
         }
 
@@ -48,8 +57,8 @@ public class AdminBootstrap implements ApplicationRunner {
         }
 
         UsuarioEntity admin = new UsuarioEntity();
-        admin.setEmail(ADMIN_EMAIL);
-        admin.setPasswordHash(passwordEncoder.encode(ADMIN_PASSWORD));
+        admin.setEmail(adminEmail);
+        admin.setPasswordHash(passwordEncoder.encode(adminPassword));
         admin.setNombre("Administrador");
         admin.setCarrera(carrera);
         admin.setSede(sede);
@@ -58,6 +67,6 @@ public class AdminBootstrap implements ApplicationRunner {
         admin.setActivo(true);
 
         usuarioRepository.save(admin);
-        log.info("Usuario administrador creado: {} / {}", ADMIN_EMAIL, ADMIN_PASSWORD);
+        log.info("Usuario administrador creado: {}", adminEmail);
     }
 }

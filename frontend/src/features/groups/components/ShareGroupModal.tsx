@@ -9,6 +9,7 @@ import {
 import type { Grupo, InvitacionResultado } from '@/features/groups/types/group.types';
 import { Button, FormAlert } from '@/shared/components/ui/FormControls';
 import { CopyLinkButton } from '@/shared/components/ui/CopyLinkButton';
+import { buildGmailShareUrl } from '@/features/groups/utils/shareGroup';
 import { getApiErrorMessage } from '@/shared/utils/errors';
 
 const CORREO_INSTITUCIONAL = /^[^@\s]+@duocuc\.cl$/i;
@@ -220,7 +221,29 @@ export function ShareGroupModal({ grupo, open, onClose }: ShareGroupModalProps) 
 
         <div className="mt-6 flex items-center justify-between gap-3">
           {link ? <CopyLinkButton link={link} /> : <span />}
-          <Button onClick={cerrar}>Listo</Button>
+          <div className="flex items-center gap-2">
+            {link && (
+              <a
+                href={buildGmailShareUrl(
+                  `Invitación al grupo ${grupo.nombre} - Duoc Connect`,
+                  [
+                    '¡Hola!',
+                    '',
+                    `Te invito a unirte al grupo de estudio "${grupo.nombre}" en Duoc Connect:`,
+                    link,
+                    '',
+                    `Código de invitación: ${grupo.codigoInvitacion}`,
+                  ].join('\n'),
+                )}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-semibold hover:bg-gray-50"
+              >
+                Enviar por Gmail
+              </a>
+            )}
+            <Button onClick={cerrar}>Listo</Button>
+          </div>
         </div>
       </div>
     </div>

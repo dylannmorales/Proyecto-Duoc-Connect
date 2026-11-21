@@ -12,7 +12,8 @@ Plataforma web para estudiantes de Duoc UC. Esta versión llega hasta el **Sprin
 | 6 | Buscar, descargar y valorar apuntes (HU-10) | Incluido |
 | 7 | Foro: publicar preguntas con imagen opcional (HU-11); responder, votar y aceptar solución (HU-12) | Incluido |
 | — | Historias adicionales: compartir apuntes por vínculo (HU-18), editar grupo (HU-19), invitar al grupo por correo (HU-20) | Incluido |
-| 8 en adelante | Buscar compañeros, moderación, panel de administración completo | Pendiente |
+| 8 | Panel de administración completo y moderación de contenido (HU-16, HU-17) | Incluido |
+| 8 en adelante | Buscar y recomendar compañeros (HU-13, HU-14) | Pendiente |
 
 ### Historias de usuario adicionales
 
@@ -131,7 +132,7 @@ Abre http://localhost:5173.
 | `/apuntes/:id` | Autenticado | Vínculo compartido de un apunte: detalle, descarga y valoración |
 | `/foro` | Autenticado | Listar y filtrar preguntas, hacer una pregunta |
 | `/foro/:id` | Autenticado | Detalle: responder, votar y aceptar solución |
-| `/admin` | Administrador | Resumen, usuarios y roles |
+| `/admin` | Administrador | Resumen, usuarios y roles, y moderación de apuntes, preguntas, respuestas, grupos, mensajes y fotos de perfil (ver, editar, eliminar) |
 
 La campana de notificaciones aparece en la barra superior cuando hay sesión iniciada.
 
@@ -175,6 +176,9 @@ Base: `/api/v1`
 | POST | `/foro/respuestas/{id}/aceptar` | Aceptar o quitar la solución (solo el autor de la pregunta) |
 | GET | `/admin/stats`, `/admin/usuarios` | Solo administrador: estadísticas y usuarios |
 | PATCH | `/admin/usuarios/{id}/rol`, `/admin/usuarios/{id}/estado` | Solo administrador: cambiar rol y activar o desactivar |
+| GET, PATCH, DELETE | `/admin/apuntes`, `/admin/foro/preguntas`, `/admin/foro/respuestas`, `/admin/grupos`, `/admin/mensajes` (y `/{id}`) | Solo administrador: listar, editar y eliminar contenido |
+| GET | `/admin/apuntes/{id}/descargar` | Solo administrador: descargar un PDF para revisarlo (no suma descargas) |
+| GET, DELETE | `/admin/fotos-perfil`, `/admin/fotos-perfil/{usuarioId}` | Solo administrador: revisar y eliminar fotos de perfil |
 
 Las rutas fuera de `/auth/**`, `/catalogos/**` y `/status` requieren el header `Authorization: Bearer <accessToken>`. Las `/admin/**` requieren además el rol `ADMINISTRADOR`.
 
@@ -192,14 +196,14 @@ Los correos (recuperación de contraseña e invitaciones a grupos) no se envían
 
 ## Usuario administrador (demo)
 
-Al arrancar por primera vez, el backend crea un administrador si no existe (clase `AdminBootstrap`):
+Al arrancar por primera vez, el backend crea un administrador si no existe (clase `AdminBootstrap`). Las credenciales salen de las variables `ADMIN_EMAIL` y `ADMIN_PASSWORD`. Solo el perfil `dev` trae una contraseña por defecto:
 
-| Campo | Valor |
+| Campo | Valor en dev |
 |-------|-------|
 | Email | `admin@duocuc.cl` |
 | Contraseña | `Admin1234` |
 
-**Cambia estas credenciales antes de desplegar a producción.**
+En `prod` no hay valores por defecto: si falta `ADMIN_PASSWORD` no se crea el administrador, y si falta `JWT_SECRET` el backend no arranca.
 
 ## Variables de entorno
 

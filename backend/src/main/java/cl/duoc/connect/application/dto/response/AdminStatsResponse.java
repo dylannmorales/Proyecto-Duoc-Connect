@@ -13,5 +13,7 @@ public class AdminStatsResponse {
     private final long usuariosActivos;
     private final long totalGrupos;
     private final long totalApuntes;
+    private final long totalPreguntas;
+    private final long totalRespuestas;
     private final long totalMensajes;
 }

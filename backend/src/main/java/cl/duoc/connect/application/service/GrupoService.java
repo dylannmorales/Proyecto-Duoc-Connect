@@ -82,8 +82,11 @@ public class GrupoService {
 
         AsignaturaEntity asignatura = null;
         if (request.getAsignaturaId() != null) {
-            asignatura = asignaturaRepository.findById(request.getAsignaturaId())
+            asignatura = asignaturaRepository.findByIdWithCarrera(request.getAsignaturaId())
                     .orElseThrow(() -> new BusinessException("ASIGNATURA_NOT_FOUND", "Asignatura no encontrada"));
+            if (!asignatura.getCarrera().getId().equals(carrera.getId())) {
+                throw new BusinessException("ASIGNATURA_INVALID", "La asignatura no pertenece a la carrera seleccionada");
+            }
         }
 
         GrupoEstudioEntity grupo = new GrupoEstudioEntity();
@@ -138,7 +141,7 @@ public class GrupoService {
     public GrupoResponse buscarPorCodigo(String codigo) {
         String codigoNormalizado = codigo.trim().toUpperCase();
         GrupoEstudioEntity grupo = grupoRepository.findByCodigoInvitacionIgnoreCase(codigoNormalizado)
-                .orElseThrow(() -> new BusinessException("INVALID_CODE", "Código de invitación inválido"));
+                .orElseThrow(() -> new BusinessException("CODE_NOT_FOUND", "Código de invitación inválido"));
 
         UUID usuarioId = getCurrentUserId();
         return toGrupoResponse(grupo, usuarioId);
@@ -148,7 +151,7 @@ public class GrupoService {
     public GrupoResponse unirsePorCodigo(String codigo) {
         String codigoNormalizado = codigo.trim().toUpperCase();
         GrupoEstudioEntity grupo = grupoRepository.findByCodigoInvitacionIgnoreCase(codigoNormalizado)
-                .orElseThrow(() -> new BusinessException("INVALID_CODE", "Código de invitación inválido"));
+                .orElseThrow(() -> new BusinessException("CODE_NOT_FOUND", "Código de invitación inválido"));
 
         UnirseGrupoRequest joinRequest = new UnirseGrupoRequest();
         joinRequest.setCodigoInvitacion(codigoNormalizado);

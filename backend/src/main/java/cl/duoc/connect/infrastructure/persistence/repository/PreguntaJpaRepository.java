@@ -25,6 +25,11 @@ public interface PreguntaJpaRepository extends JpaRepository<PreguntaEntity, UUI
             """)
     Optional<PreguntaEntity> findByIdWithDetails(@Param("id") UUID id);
 
+    @EntityGraph(attributePaths = {"usuario", "carrera", "asignatura"})
+    @Query(value = "SELECT p FROM PreguntaEntity p",
+            countQuery = "SELECT COUNT(p) FROM PreguntaEntity p")
+    Page<PreguntaEntity> findAllForAdmin(Pageable pageable);
+
     /** estado: TODAS, RESUELTAS (con respuesta aceptada) o ABIERTAS. q ya viene en minúsculas y con %. */
     @EntityGraph(attributePaths = {"usuario", "carrera", "asignatura"})
     @Query(value = """

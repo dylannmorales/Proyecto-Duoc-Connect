@@ -160,6 +160,20 @@ public class LocalFileStorageAdapter implements FileStoragePort {
         if (!isPdfType && !isPdfExtension) {
             throw new BusinessException("FILE_INVALID_TYPE", "Solo se permiten archivos PDF");
         }
+        if (!hasPdfSignature(file)) {
+            throw new BusinessException("FILE_INVALID_TYPE", "El archivo no es un PDF válido");
+        }
+    }
+
+    /** Revisa la firma "%PDF-" del contenido, no solo lo que declara el cliente. */
+    private boolean hasPdfSignature(MultipartFile file) {
+        byte[] expected = {'%', 'P', 'D', 'F', '-'};
+        try (java.io.InputStream in = file.getInputStream()) {
+            byte[] header = in.readNBytes(expected.length);
+            return java.util.Arrays.equals(header, expected);
+        } catch (IOException ex) {
+            return false;
+        }
     }
 
     private String resolveImageExtension(MultipartFile file) {

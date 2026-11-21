@@ -22,8 +22,9 @@ spring:
     baseline-on-migrate: true
   servlet:
     multipart:
-      max-file-size: 10MB
-      max-request-size: 12MB
+      # Algo sobre 10 MB para que la validación propia responda "El PDF no puede superar 10 MB".
+      max-file-size: 11MB
+      max-request-size: 13MB
 
 server:
   port: 8080
@@ -49,6 +50,10 @@ app:
   upload:
     path: ${UPLOAD_PATH:./uploads}
   frontend-url: ${FRONTEND_URL:http://localhost:5173}
+  # Administrador inicial. Si no se define ADMIN_PASSWORD no se crea (salvo en dev, ver application-dev.yml).
+  admin:
+    email: ${ADMIN_EMAIL:admin@duocuc.cl}
+    password: ${ADMIN_PASSWORD:}
 
 springdoc:
   api-docs:
