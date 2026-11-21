@@ -1,3 +1,4 @@
+import { Combobox } from '@/shared/components/ui/Combobox';
 import { useState, type ReactNode } from 'react';
 import { PageHeader } from '@/shared/components/ui/PageHeader';
 import { IconShield } from '@/shared/components/ui/Icons';
@@ -356,21 +357,23 @@ export function AdminDashboardPage() {
                       <span className="text-xs">{usuario.sedeNombre}</span>
                     </td>
                     <td className="px-4 py-3">
-                      <select
-                        value={usuario.rol}
-                        disabled={isSelf || rolMutation.isPending}
-                        onChange={(e) => {
-                          setError('');
-                          rolMutation.mutate({
-                            id: usuario.id,
-                            rol: e.target.value as RolUsuario,
-                          });
-                        }}
-                        className="rounded-lg border border-gray-300 px-2 py-1 text-sm disabled:bg-gray-100"
-                      >
-                        <option value="ESTUDIANTE">Estudiante</option>
-                        <option value="ADMINISTRADOR">Administrador</option>
-                      </select>
+                      <div className="w-44">
+                        <Combobox
+                          value={usuario.rol}
+                          allowEmpty={false}
+                          searchable={false}
+                          disabled={isSelf || rolMutation.isPending}
+                          options={[
+                            { value: 'ESTUDIANTE', label: 'Estudiante' },
+                            { value: 'ADMINISTRADOR', label: 'Administrador' },
+                          ]}
+                          className="py-1.5 text-sm"
+                          onChange={(e) => {
+                            setError('');
+                            rolMutation.mutate({ id: usuario.id, rol: e.target.value as RolUsuario });
+                          }}
+                        />
+                      </div>
                     </td>
                     <td className="px-4 py-3">
                       <button

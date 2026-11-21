@@ -46,10 +46,12 @@
   /* Modales */
   .modal-overlay {
     @apply fixed inset-0 z-50 flex items-center justify-center bg-gray-950/50 p-4 backdrop-blur-sm;
+    /* Los contenedores con space-y-* agregan margin-top a sus hijos y desplazaban el modal fuera de la pantalla. */
+    margin: 0 !important;
   }
 
   .modal-panel {
-    @apply max-h-[90vh] w-full overflow-y-auto rounded-3xl bg-white p-6 shadow-2xl ring-1 ring-black/5 sm:p-7;
+    @apply max-h-[calc(100dvh-2rem)] w-full overflow-y-auto overscroll-contain rounded-3xl bg-white p-6 shadow-2xl ring-1 ring-black/5 sm:p-7;
   }
 
   .icon-btn {

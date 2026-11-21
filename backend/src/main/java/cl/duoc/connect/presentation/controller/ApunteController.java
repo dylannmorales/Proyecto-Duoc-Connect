@@ -1,5 +1,8 @@
 package cl.duoc.connect.presentation.controller;
 
+import cl.duoc.connect.application.dto.request.CompartirApunteRequest;
+import cl.duoc.connect.application.dto.response.InvitacionResponse;
+
 import cl.duoc.connect.application.dto.request.ValorarApunteRequest;
 import cl.duoc.connect.application.dto.response.ApiResponse;
 import cl.duoc.connect.application.dto.response.ApunteDescarga;
@@ -29,6 +32,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -82,6 +86,15 @@ public class ApunteController {
                         .build()
                         .toString())
                 .body(descarga.resource());
+    }
+
+    @PostMapping("/{id}/compartir")
+    @Operation(summary = "Compartir un apunte por correo institucional")
+    public ApiResponse<List<InvitacionResponse>> compartirApunte(
+            @PathVariable UUID id,
+            @Valid @RequestBody CompartirApunteRequest request) {
+        return ApiResponse.ok(
+                apunteService.compartirPorCorreo(id, request.getEmails(), request.getMensaje()), "Apunte compartido");
     }
 
     @PutMapping("/{id}/valoracion")

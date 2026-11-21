@@ -1,4 +1,4 @@
-import { useState, type KeyboardEvent } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import {
@@ -9,16 +9,12 @@ import {
 import type { Grupo, InvitacionResultado } from '@/features/groups/types/group.types';
 import { Button, FormAlert } from '@/shared/components/ui/FormControls';
 import { CopyLinkButton } from '@/shared/components/ui/CopyLinkButton';
+import { EmailChipsInput, InvitationResults } from '@/shared/components/ui/EmailChipsInput';
+import { sonCorreosValidos } from '@/shared/utils/email';
+import { Avatar } from '@/shared/components/ui/Avatar';
+import { IconGlobe, IconLock } from '@/shared/components/ui/Icons';
 import { buildGmailShareUrl } from '@/features/groups/utils/shareGroup';
 import { getApiErrorMessage } from '@/shared/utils/errors';
-
-const CORREO_INSTITUCIONAL = /^[^@\s]+@duocuc\.cl$/i;
-
-const estadoEstilos: Record<InvitacionResultado['estado'], string> = {
-  ENVIADA: 'text-green-700',
-  YA_ES_MIEMBRO: 'text-gray-500',
-  INVALIDO: 'text-red-600',
-};
 
 interface ShareGroupModalProps {
   grupo: Grupo;
@@ -28,7 +24,6 @@ interface ShareGroupModalProps {
 
 export function ShareGroupModal({ grupo, open, onClose }: ShareGroupModalProps) {
   const { user } = useAuth();
-  const [borrador, setBorrador] = useState('');
   const [correos, setCorreos] = useState<string[]>([]);
   const [enviando, setEnviando] = useState(false);
   const [resultados, setResultados] = useState<InvitacionResultado[]>([]);
@@ -43,48 +38,12 @@ export function ShareGroupModal({ grupo, open, onClose }: ShareGroupModalProps) 
   if (!open) return null;
 
   const link = grupo.codigoInvitacion ? buildGrupoInvitationLink(grupo.codigoInvitacion) : '';
-  const hayInvalidos = correos.some((c) => !CORREO_INSTITUCIONAL.test(c));
-
-  function agregar(texto: string) {
-    const nuevos = texto
-      .split(/[\s,;]+/)
-      .map((c) => c.trim().toLowerCase())
-      .filter(Boolean);
-    if (nuevos.length === 0) return;
-    setCorreos((actuales) => Array.from(new Set([...actuales, ...nuevos])));
-  }
-
-  function agregarBorrador() {
-    agregar(borrador);
-    setBorrador('');
-  }
-
-  // Al pegar o escribir un separador, todo lo anterior al último separador se convierte en etiquetas.
-  function handleChange(value: string) {
-    const corte = value.search(/[\s,;][^\s,;]*$/);
-    if (corte === -1) {
-      setBorrador(value);
-      return;
-    }
-    agregar(value.slice(0, corte));
-    setBorrador(value.slice(corte + 1));
-  }
-
-  function handleKeyDown(event: KeyboardEvent<HTMLInputElement>) {
-    if (['Enter', ',', ';', ' ', 'Tab'].includes(event.key) && borrador.trim()) {
-      event.preventDefault();
-      agregarBorrador();
-    } else if (event.key === 'Backspace' && !borrador && correos.length > 0) {
-      setCorreos((actuales) => actuales.slice(0, -1));
-    }
-  }
 
   async function enviar() {
     setError('');
     setEnviando(true);
     try {
-      const respuesta = await invitarAlGrupo(grupo.id, correos);
-      setResultados(respuesta);
+      setResultados(await invitarAlGrupo(grupo.id, correos));
       setCorreos([]);
     } catch (err) {
       setError(getApiErrorMessage(err, 'No se pudieron enviar las invitaciones'));
@@ -94,7 +53,6 @@ export function ShareGroupModal({ grupo, open, onClose }: ShareGroupModalProps) 
   }
 
   function cerrar() {
-    setBorrador('');
     setCorreos([]);
     setResultados([]);
     setError('');
@@ -104,19 +62,10 @@ export function ShareGroupModal({ grupo, open, onClose }: ShareGroupModalProps) 
   const miembros = miembrosQuery.data ?? [];
 
   return (
-    <div
-      className="modal-overlay"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="share-group-title"
-      onClick={cerrar}
-    >
-      <div
-        className="modal-panel max-w-lg"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="mb-4 flex items-start justify-between gap-4">
-          <h2 id="share-group-title" className="text-xl font-bold">
+    <div className="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="share-group-title" onClick={cerrar}>
+      <div className="modal-panel max-w-lg" onClick={(e) => e.stopPropagation()}>
+        <div className="mb-5 flex items-start justify-between gap-4">
+          <h2 id="share-group-title" className="text-xl font-bold leading-snug">
             Compartir “{grupo.nombre}”
           </h2>
           <button type="button" onClick={cerrar} className="icon-btn" aria-label="Cerrar">
@@ -124,53 +73,11 @@ export function ShareGroupModal({ grupo, open, onClose }: ShareGroupModalProps) 
           </button>
         </div>
 
-        <div className="rounded-lg border-2 border-gray-300 px-3 py-2 focus-within:border-duoc-yellow">
-          <label htmlFor="invitar-correos" className="block text-xs font-medium text-gray-500">
-            Invitar por correo institucional
-          </label>
-          <div className="mt-1 flex flex-wrap items-center gap-1.5">
-            {correos.map((correo) => {
-              const valido = CORREO_INSTITUCIONAL.test(correo);
-              return (
-                <span
-                  key={correo}
-                  className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs ${
-                    valido ? 'bg-gray-100 text-gray-800' : 'bg-red-50 text-red-700 ring-1 ring-red-200'
-                  }`}
-                >
-                  {correo}
-                  <button
-                    type="button"
-                    onClick={() => setCorreos((actuales) => actuales.filter((c) => c !== correo))}
-                    aria-label={`Quitar ${correo}`}
-                    className="text-gray-500 hover:text-gray-800"
-                  >
-                    ✕
-                  </button>
-                </span>
-              );
-            })}
-            <input
-              id="invitar-correos"
-              type="text"
-              inputMode="email"
-              autoComplete="off"
-              value={borrador}
-              onChange={(e) => handleChange(e.target.value)}
-              onKeyDown={handleKeyDown}
-              onBlur={agregarBorrador}
-              placeholder={correos.length === 0 ? 'nombre.apellido@duocuc.cl' : ''}
-              className="min-w-[10rem] flex-1 border-0 py-1 text-sm outline-none"
-            />
-          </div>
-        </div>
-        {hayInvalidos && (
-          <p className="mt-1 text-xs text-red-600">Solo se puede invitar a correos @duocuc.cl.</p>
-        )}
+        <EmailChipsInput id="invitar-correos" value={correos} onChange={setCorreos} label="Invitar por correo institucional" />
 
         {correos.length > 0 && (
           <div className="mt-3 flex justify-end">
-            <Button onClick={enviar} loading={enviando} disabled={hayInvalidos}>
+            <Button onClick={enviar} loading={enviando} disabled={!sonCorreosValidos(correos)}>
               Enviar invitación{correos.length > 1 ? 'es' : ''}
             </Button>
           </div>
@@ -181,30 +88,18 @@ export function ShareGroupModal({ grupo, open, onClose }: ShareGroupModalProps) 
             <FormAlert message={error} />
           </div>
         )}
-
         {resultados.length > 0 && (
-          <ul className="mt-3 space-y-1 rounded-lg bg-gray-50 p-3 text-sm" aria-live="polite">
-            {resultados.map((r) => (
-              <li key={r.email} className="flex justify-between gap-3">
-                <span className="truncate">{r.email}</span>
-                <span className={`shrink-0 font-medium ${estadoEstilos[r.estado]}`}>{r.mensaje}</span>
-              </li>
-            ))}
-          </ul>
+          <div className="mt-3">
+            <InvitationResults resultados={resultados} />
+          </div>
         )}
 
-        <h3 className="mb-3 mt-6 font-semibold">Personas que tienen acceso</h3>
+        <h3 className="mb-3 mt-6 text-sm font-semibold text-gray-900">Personas con acceso</h3>
         {miembrosQuery.isLoading && <p className="text-sm text-gray-500">Cargando...</p>}
-        <ul className="space-y-3">
+        <ul className="max-h-56 space-y-3 overflow-y-auto pr-1">
           {miembros.map((miembro) => (
             <li key={miembro.usuarioId} className="flex items-center gap-3">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-duoc-yellow text-xs font-bold">
-                {miembro.fotoUrl ? (
-                  <img src={miembro.fotoUrl} alt="" className="h-full w-full object-cover" />
-                ) : (
-                  miembro.nombre.charAt(0).toUpperCase()
-                )}
-              </div>
+              <Avatar nombre={miembro.nombre} fotoUrl={miembro.fotoUrl} size="md" />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium">
                   {miembro.nombre}
@@ -219,7 +114,28 @@ export function ShareGroupModal({ grupo, open, onClose }: ShareGroupModalProps) 
           ))}
         </ul>
 
-        <div className="mt-6 flex items-center justify-between gap-3">
+        <h3 className="mb-3 mt-6 text-sm font-semibold text-gray-900">Acceso general</h3>
+        <div className="flex items-center gap-3 rounded-2xl bg-gray-50 p-3">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white ring-1 ring-gray-200">
+            {grupo.privado ? <IconLock className="h-5 w-5" /> : <IconGlobe className="h-5 w-5" />}
+          </span>
+          <div className="min-w-0 text-sm">
+            <p className="font-medium">{grupo.privado ? 'Restringido' : 'Público en Duoc Connect'}</p>
+            <p className="text-xs text-gray-500">
+              {grupo.privado
+                ? 'Solo pueden unirse quienes tengan el enlace o el código'
+                : 'Cualquier estudiante puede encontrarlo y unirse'}
+              {grupo.codigoInvitacion && (
+                <>
+                  {' · Código '}
+                  <span className="font-mono font-semibold text-gray-700">{grupo.codigoInvitacion}</span>
+                </>
+              )}
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
           {link ? <CopyLinkButton link={link} /> : <span />}
           <div className="flex items-center gap-2">
             {link && (
@@ -237,9 +153,9 @@ export function ShareGroupModal({ grupo, open, onClose }: ShareGroupModalProps) 
                 )}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-semibold hover:bg-gray-50"
+                className="inline-flex items-center rounded-xl border border-gray-300 px-4 py-2.5 text-sm font-semibold hover:bg-gray-50"
               >
-                Enviar por Gmail
+                Gmail
               </a>
             )}
             <Button onClick={cerrar}>Listo</Button>

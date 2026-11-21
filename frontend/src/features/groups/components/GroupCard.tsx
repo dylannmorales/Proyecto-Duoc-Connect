@@ -1,12 +1,15 @@
+import { IconPencil } from '@/shared/components/ui/Icons';
 import { Link } from 'react-router-dom';
 import type { Grupo } from '@/features/groups/types/group.types';
 
 interface GroupCardProps {
   grupo: Grupo;
   onJoin?: (grupo: Grupo) => void;
+  onEdit?: (grupo: Grupo) => void;
 }
 
-export function GroupCard({ grupo, onJoin }: GroupCardProps) {
+export function GroupCard({ grupo, onJoin, onEdit }: GroupCardProps) {
+  const puedeEditar = grupo.rolEnGrupo === 'ADMIN_GRUPO' && !!onEdit;
   return (
     <article className="flex flex-col card card-hover p-5">
       <div className="mb-3 flex items-start justify-between gap-3">
@@ -38,7 +41,18 @@ export function GroupCard({ grupo, onJoin }: GroupCardProps) {
           {grupo.asignaturaNombre && ` · ${grupo.asignaturaNombre}`}
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex shrink-0 gap-2">
+          {puedeEditar && (
+            <button
+              type="button"
+              onClick={() => onEdit?.(grupo)}
+              className="inline-flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-semibold hover:bg-gray-50"
+              aria-label={`Editar ${grupo.nombre}`}
+            >
+              <IconPencil className="h-4 w-4" />
+              Editar
+            </button>
+          )}
           {grupo.esMiembro ? (
             <Link
               to={`/grupos/${grupo.id}`}

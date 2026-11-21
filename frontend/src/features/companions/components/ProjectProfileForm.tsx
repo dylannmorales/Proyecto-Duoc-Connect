@@ -1,3 +1,4 @@
+import { Combobox } from '@/shared/components/ui/Combobox';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState, type FormEvent, type ReactNode } from 'react';
 import { useAuth } from '@/features/auth/hooks/useAuth';
@@ -304,18 +305,14 @@ export function ProjectProfileForm({ perfil, onSave, embedded = false }: Project
             <li key={index} className="flex flex-wrap items-end gap-3 rounded-2xl border border-gray-200 bg-gray-50/60 p-3">
               <div className="min-w-[9rem] flex-1">
                 <label className="field-label text-xs" htmlFor={`dia-${index}`}>Día</label>
-                <select
+                <Combobox
                   id={`dia-${index}`}
-                  value={d.diaSemana}
+                  value={String(d.diaSemana)}
+                  allowEmpty={false}
+                  searchable={false}
+                  options={DIAS_SEMANA.map((dia, i) => ({ value: String(i), label: dia }))}
                   onChange={(e) => updateDisponibilidad(index, 'diaSemana', Number(e.target.value))}
-                  className="field-input"
-                >
-                  {DIAS_SEMANA.map((dia, i) => (
-                    <option key={dia} value={i}>
-                      {dia}
-                    </option>
-                  ))}
-                </select>
+                />
               </div>
               <div>
                 <label className="field-label text-xs" htmlFor={`inicio-${index}`}>Desde</label>

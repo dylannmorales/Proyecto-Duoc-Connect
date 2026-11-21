@@ -109,6 +109,17 @@ public class NotificacionService {
         notificacionRepository.save(notificacion);
     }
 
+    @Transactional
+    public void notificarApunteCompartido(UsuarioEntity destinatario, String apunteTitulo, String remitenteNombre, UUID apunteId) {
+        NotificacionEntity notificacion = new NotificacionEntity();
+        notificacion.setUsuario(destinatario);
+        notificacion.setTipo(TipoNotificacion.APUNTE_COMPARTIDO);
+        notificacion.setTitulo("Te compartieron un apunte");
+        notificacion.setMensaje(remitenteNombre + " compartió contigo: " + apunteTitulo);
+        notificacion.setEnlace("/apuntes/" + apunteId);
+        notificacionRepository.save(notificacion);
+    }
+
     private NotificacionResponse toResponse(NotificacionEntity entity) {
         return NotificacionResponse.builder()
                 .id(entity.getId())

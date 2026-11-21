@@ -58,7 +58,9 @@ export function GroupChat({ grupoId }: GroupChatProps) {
   }, [mensajesQuery.data?.content]);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    // Solo desplaza la lista de mensajes; scrollIntoView movía toda la página hasta el chat.
+    const lista = bottomRef.current?.parentElement;
+    if (lista) lista.scrollTo({ top: lista.scrollHeight, behavior: 'smooth' });
   }, [mensajes]);
 
   async function handleSubmit(event: FormEvent) {

@@ -86,3 +86,12 @@ export const IconLogout = base(<path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-
 export const IconArrowRight = base(<path d="M5 12h14M13 6l6 6-6 6" />);
 export const IconCheck = base(<path d="m5 12 5 5 9-10" />);
 export const IconActivity = base(<path d="M3 12h4l3-8 4 16 3-8h4" />);
+export const IconLink = base(
+  <path d="M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 0 0-5.66-5.66l-1 1M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 0 0 5.66 5.66l1-1" />,
+);
+export const IconLock = base(<path d="M6 11h12v9H6zM8 11V8a4 4 0 0 1 8 0v3" />);
+export const IconGlobe = base(
+  <path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm-9-9h18M12 3c2.5 2.5 3.5 5.5 3.5 9s-1 6.5-3.5 9c-2.5-2.5-3.5-5.5-3.5-9s1-6.5 3.5-9Z" />,
+);
+export const IconPencil = base(<path d="m4 20 4-1 11-11-3-3L5 16l-1 4Zm10-13 3 3" />);
+export const IconShare = base(<path d="M16 8a3 3 0 1 0-2.8-4M8 12a3 3 0 1 0 0 .01M16 16a3 3 0 1 0 0 .01M10.6 10.7l2.8-1.5M10.6 13.3l2.8 1.5" />);

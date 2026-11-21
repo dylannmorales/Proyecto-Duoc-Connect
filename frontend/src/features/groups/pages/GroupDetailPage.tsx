@@ -1,3 +1,4 @@
+import { IconPencil, IconShare } from '@/shared/components/ui/Icons';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
@@ -6,7 +7,7 @@ import { GroupChat } from '@/features/groups/components/GroupChat';
 import { LeaveGroupModal } from '@/features/groups/components/LeaveGroupModal';
 import { MemberList } from '@/features/groups/components/MemberList';
 import { ShareGroupModal } from '@/features/groups/components/ShareGroupModal';
-import { getGrupo, leaveGrupo, updateGrupo } from '@/features/groups/services/groupsService';
+import { getGrupo, invitarYResumir, leaveGrupo, updateGrupo } from '@/features/groups/services/groupsService';
 import type { CreateGrupoPayload, Grupo } from '@/features/groups/types/group.types';
 import { Button, FormAlert } from '@/shared/components/ui/FormControls';
 import { getApiErrorMessage } from '@/shared/utils/errors';
@@ -16,7 +17,9 @@ export function GroupDetailPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const initialGrupo = (location.state as { grupo?: Grupo } | null)?.grupo;
+  const estadoNavegacion = location.state as { grupo?: Grupo; aviso?: string } | null;
+  const initialGrupo = estadoNavegacion?.grupo;
+  const [aviso, setAviso] = useState(estadoNavegacion?.aviso ?? '');
   const [error, setError] = useState('');
   const [leaving, setLeaving] = useState(false);
   const [showShare, setShowShare] = useState(false);
@@ -33,16 +36,13 @@ export function GroupDetailPage() {
   const grupo = grupoQuery.data;
   const esAdmin = grupo?.rolEnGrupo === 'ADMIN_GRUPO';
 
-  async function handleEdit(payload: CreateGrupoPayload) {
+  async function handleEdit(payload: CreateGrupoPayload, invitados: string[]) {
     setError('');
-    try {
-      const actualizado = await updateGrupo(id!, payload);
-      queryClient.setQueryData(['grupo', id], actualizado);
-      await queryClient.invalidateQueries({ queryKey: ['grupos'] });
-    } catch (err) {
-      setError(getApiErrorMessage(err, 'No se pudo actualizar el grupo'));
-      throw err;
-    }
+    const actualizado = await updateGrupo(id!, payload);
+    queryClient.setQueryData(['grupo', id], actualizado);
+    await queryClient.invalidateQueries({ queryKey: ['grupos'] });
+    const resumen = await invitarYResumir(actualizado.id, invitados);
+    setAviso(resumen ? `Grupo actualizado. ${resumen}` : 'Grupo actualizado.');
   }
 
   async function handleLeave() {
@@ -111,18 +111,21 @@ export function GroupDetailPage() {
               Código: <span className="font-mono font-bold">{grupo.codigoInvitacion}</span>
             </div>
           )}
-          <Button onClick={() => setShowShare(true)}>Compartir</Button>
           {esAdmin && (
-            <Button variant="secondary" onClick={() => setShowEdit(true)}>
+            <Button variant="secondary" icon={<IconPencil className="h-4 w-4" />} onClick={() => setShowEdit(true)}>
               Editar grupo
             </Button>
           )}
+          <Button icon={<IconShare className="h-4 w-4" />} onClick={() => setShowShare(true)}>
+            Compartir
+          </Button>
           <Button variant="danger" onClick={() => setShowLeave(true)}>
             Salir del grupo
           </Button>
         </div>
       </div>
 
+      {aviso && <FormAlert type="success" message={aviso} />}
       {error && <FormAlert message={error} />}
 
       <div className="grid gap-6 lg:grid-cols-3">

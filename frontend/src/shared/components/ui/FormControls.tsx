@@ -1,4 +1,5 @@
-import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from 'react';
+import { Combobox } from './Combobox';
+import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode, TextareaHTMLAttributes } from 'react';
 
 type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'dark';
 type ButtonSize = 'sm' | 'md' | 'lg';
@@ -124,44 +125,32 @@ export function Textarea({ label, error, hint, id, className = '', rows = 4, ...
   );
 }
 
-interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
+interface SelectProps {
   label: string;
   error?: string;
   hint?: ReactNode;
   options: Array<{ value: string; label: string }>;
   placeholder?: string;
+  id?: string;
+  name?: string;
+  value?: string;
+  required?: boolean;
+  disabled?: boolean;
+  className?: string;
+  /** Muestra un buscador dentro de la lista. Por defecto, cuando hay más de 7 opciones. */
+  searchable?: boolean;
+  onChange?: (event: { target: { value: string; name?: string } }) => void;
 }
 
-export function Select({
-  label,
-  error,
-  hint,
-  options,
-  placeholder = 'Seleccionar...',
-  id,
-  className = '',
-  ...props
-}: SelectProps) {
-  const selectId = id ?? props.name;
+export function Select({ label, error, hint, id, name, required, ...props }: SelectProps) {
+  const selectId = id ?? name;
   return (
     <div>
       <label htmlFor={selectId} className="field-label">
         {label}
-        {props.required && <span className="ml-0.5 text-red-500">*</span>}
+        {required && <span className="ml-0.5 text-red-500">*</span>}
       </label>
-      <select
-        id={selectId}
-        aria-invalid={error ? true : undefined}
-        className={`field-input appearance-none bg-[url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 20 20%22 fill=%22%236b7280%22><path fill-rule=%22evenodd%22 d=%22M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.06l3.71-3.83a.75.75 0 1 1 1.08 1.04l-4.25 4.39a.75.75 0 0 1-1.08 0L5.21 8.27a.75.75 0 0 1 .02-1.06Z%22 clip-rule=%22evenodd%22/></svg>')] bg-[length:1.25rem] bg-[right_0.6rem_center] bg-no-repeat pr-10 ${error ? 'field-input-error' : ''} ${className}`}
-        {...props}
-      >
-        <option value="">{placeholder}</option>
-        {options.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
+      <Combobox id={selectId} name={name} required={required} invalid={Boolean(error)} {...props} />
       <FieldMessage error={error} hint={hint} />
     </div>
   );

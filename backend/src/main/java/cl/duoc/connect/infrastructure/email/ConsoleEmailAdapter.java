@@ -26,4 +26,18 @@ public class ConsoleEmailAdapter implements EmailPort {
         log.info("Código de invitación: {}", codigo);
         log.info("=========================================");
     }
+
+    @Override
+    public void sendNoteShareEmail(
+            String to, String apunteTitulo, String asignaturaNombre, String remitenteNombre, String link, String mensaje) {
+        log.info("=== EMAIL APUNTE COMPARTIDO (DEV) ===");
+        log.info("Para: {}", to);
+        log.info("Asunto: {} compartió contigo el apunte \"{}\" - Duoc Connect", remitenteNombre, apunteTitulo);
+        log.info("Asignatura: {}", asignaturaNombre);
+        if (mensaje != null && !mensaje.isBlank()) {
+            log.info("Mensaje: {}", mensaje);
+        }
+        log.info("Enlace: {}", link);
+        log.info("=====================================");
+    }
 }

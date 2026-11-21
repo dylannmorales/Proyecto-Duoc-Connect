@@ -2,6 +2,8 @@ package cl.duoc.connect.application.service;
 
 import cl.duoc.connect.application.dto.response.ApunteDescarga;
 import cl.duoc.connect.application.dto.response.ApunteResponse;
+import cl.duoc.connect.application.dto.response.InvitacionResponse;
+import cl.duoc.connect.application.port.out.EmailPort;
 import cl.duoc.connect.application.dto.response.PageResponse;
 import cl.duoc.connect.application.mapper.ApunteMapper;
 import cl.duoc.connect.application.port.out.FileStoragePort;
@@ -20,6 +22,7 @@ import cl.duoc.connect.infrastructure.persistence.repository.UsuarioJpaRepositor
 import cl.duoc.connect.infrastructure.persistence.repository.ValoracionApunteJpaRepository;
 import cl.duoc.connect.infrastructure.security.UserPrincipal;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -33,7 +36,13 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Optional;
+import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -49,6 +58,13 @@ public class ApunteService {
     private final ValoracionApunteJpaRepository valoracionRepository;
     private final FileStoragePort fileStoragePort;
     private final ApunteMapper apunteMapper;
+    private final EmailPort emailPort;
+    private final NotificacionService notificacionService;
+
+    private static final Pattern CORREO_INSTITUCIONAL = Pattern.compile("^[^@\\s]+@duocuc\\.cl$");
+
+    @Value("${app.frontend-url:http://localhost:5173}")
+    private String frontendUrl;
 
     @Transactional
     public ApunteResponse subirApunte(
@@ -185,6 +201,42 @@ public class ApunteService {
         return ((UserPrincipal) SecurityContextHolder.getContext()
                 .getAuthentication()
                 .getPrincipal()).getId();
+    }
+
+    /**
+     * Comparte el apunte por correo institucional (estilo "Compartir" de Google Drive). Si el
+     * destinatario está registrado, además recibe una notificación in-app con el enlace.
+     */
+    @Transactional
+    public List<InvitacionResponse> compartirPorCorreo(UUID apunteId, List<String> emails, String mensaje) {
+        UsuarioEntity remitente = getCurrentUsuario();
+        ApunteEntity apunte = findApunteWithDetails(apunteId);
+        String link = frontendUrl + "/apuntes/" + apunte.getId();
+        String nota = StringUtils.hasText(mensaje) ? mensaje.trim() : null;
+
+        Set<String> procesados = new LinkedHashSet<>();
+        for (String email : emails) {
+            if (StringUtils.hasText(email)) {
+                procesados.add(email.trim().toLowerCase(Locale.ROOT));
+            }
+        }
+
+        List<InvitacionResponse> resultados = new ArrayList<>();
+        for (String email : procesados) {
+            if (!CORREO_INSTITUCIONAL.matcher(email).matches()) {
+                resultados.add(InvitacionResponse.invalido(email));
+                continue;
+            }
+            emailPort.sendNoteShareEmail(
+                    email, apunte.getTitulo(), apunte.getAsignatura().getNombre(), remitente.getNombre(), link, nota);
+            Optional<UsuarioEntity> registrado = usuarioRepository.findByEmailIgnoreCase(email);
+            registrado
+                    .filter(u -> !u.getId().equals(remitente.getId()))
+                    .ifPresent(u -> notificacionService.notificarApunteCompartido(
+                            u, apunte.getTitulo(), remitente.getNombre(), apunte.getId()));
+            resultados.add(InvitacionResponse.compartido(email));
+        }
+        return resultados;
     }
 
     private ApunteEntity findApunteWithDetails(UUID id) {

@@ -49,3 +49,17 @@ export async function descargarApunte(apunte: Pick<Apunte, 'id' | 'nombreArchivo
   link.remove();
   URL.revokeObjectURL(url);
 }
+
+export interface ResultadoCompartir {
+  email: string;
+  estado: 'ENVIADA' | 'YA_ES_MIEMBRO' | 'INVALIDO';
+  mensaje: string;
+}
+
+export async function compartirApunte(id: string, emails: string[], mensaje?: string) {
+  const { data } = await apiClient.post<ApiResponse<ResultadoCompartir[]>>(`/apuntes/${id}/compartir`, {
+    emails,
+    mensaje: mensaje || undefined,
+  });
+  return data.data;
+}
