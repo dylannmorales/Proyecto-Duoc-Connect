@@ -25,6 +25,15 @@ Surgieron después del backlog de Fase 1 (que llega hasta HU-17) y continúan su
 | HU-19 | Administrador del grupo | Editar el grupo de estudio | Solo el administrador del grupo ve "Editar grupo" y puede cambiar nombre, descripción, carrera, asignatura, cupo y privacidad. El cupo no puede quedar bajo la cantidad de integrantes actuales y la asignatura debe ser de la carrera elegida. Un miembro sin ese rol recibe 403. |
 | HU-20 | Miembro del grupo | Compartir el grupo mediante una invitación por correo | "Compartir" abre un modal donde se agregan correos `@duocuc.cl`, se ven las personas con acceso (nombre, correo y rol) y "Copiar vínculo". Cada invitado recibe un correo con el vínculo `/grupos/unirse/{código}`; si ya tiene cuenta, también una notificación. Los correos no institucionales se rechazan y los que ya son miembros se omiten, informando el resultado de cada uno. |
 
+## Pruebas e integración continua
+
+Cada push y cada pull request ejecutan automáticamente (GitHub Actions, `.github/workflows/ci.yml`):
+
+- **Backend:** las 111 pruebas unitarias con JUnit 5 y Mockito, más el reporte de cobertura JaCoCo (67,7 % de líneas). El resumen aparece en la pestaña *Actions* y el reporte completo se descarga como artefacto.
+- **Frontend:** lint, chequeo de tipos y build.
+
+Las pruebas cubren registro, inicio de sesión y recuperación de contraseña, perfil, grupos, chat, notificaciones, apuntes, foro, compañeros y su cálculo de compatibilidad, el panel de administración, la seguridad JWT, el manejo de errores y el almacenamiento de archivos. El informe QA con las pruebas de API, E2E y base de datos está en la carpeta de entregables del proyecto.
+
 ## Modelo de datos
 
 El diagrama entidad-relación, el detalle de las tablas y la justificación de la normalización (3FN) están en [docs/modelo-datos.md](docs/modelo-datos.md) (diagrama también en [docs/modelo-er.svg](docs/modelo-er.svg)).
@@ -301,7 +310,7 @@ duoc-connect/
 | Comando | Dónde | Qué hace |
 |---------|-------|----------|
 | `mvn spring-boot:run` | `backend/` | Inicia la API |
-| `mvn test` | `backend/` | Ejecuta los tests (incluye pruebas unitarias de HU-10, HU-11, HU-12, HU-19, HU-20 y salir del grupo) |
+| `mvn test` | `backend/` | Ejecuta las 111 pruebas unitarias y genera el reporte de cobertura en `target/site/jacoco/index.html` (67,7 % de líneas) |
 | `mvn -DskipTests package` | `backend/` | Genera el JAR |
 | `npm run dev` | `frontend/` | Servidor de desarrollo |
 | `npm run build` | `frontend/` | Chequea tipos y compila |
