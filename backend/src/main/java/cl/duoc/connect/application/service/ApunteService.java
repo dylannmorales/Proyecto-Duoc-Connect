@@ -11,7 +11,6 @@ import cl.duoc.connect.domain.exception.BusinessException;
 import cl.duoc.connect.domain.exception.EntityNotFoundException;
 import cl.duoc.connect.infrastructure.persistence.entity.ApunteEntity;
 import cl.duoc.connect.infrastructure.persistence.entity.AsignaturaEntity;
-import cl.duoc.connect.infrastructure.persistence.entity.CarreraEntity;
 import cl.duoc.connect.infrastructure.persistence.entity.UsuarioEntity;
 import cl.duoc.connect.infrastructure.persistence.entity.ValoracionApunteEntity;
 import cl.duoc.connect.infrastructure.persistence.entity.ValoracionApunteId;
@@ -80,8 +79,9 @@ public class ApunteService {
             throw new BusinessException("VALIDATION_ERROR", "El título es obligatorio");
         }
 
-        CarreraEntity carrera = carreraRepository.findById(carreraId)
-                .orElseThrow(() -> new BusinessException("CARRERA_NOT_FOUND", "Carrera no encontrada"));
+        if (!carreraRepository.existsById(carreraId)) {
+            throw new BusinessException("CARRERA_NOT_FOUND", "Carrera no encontrada");
+        }
 
         AsignaturaEntity asignatura = asignaturaRepository.findByIdWithCarrera(asignaturaId)
                 .orElseThrow(() -> new BusinessException("ASIGNATURA_NOT_FOUND", "Asignatura no encontrada"));
@@ -98,7 +98,6 @@ public class ApunteService {
         apunte.setTitulo(titulo.trim());
         apunte.setDescripcion(StringUtils.hasText(descripcion) ? descripcion.trim() : null);
         apunte.setUsuario(usuario);
-        apunte.setCarrera(carrera);
         apunte.setAsignatura(asignatura);
         apunte.setArchivoUrl(archivoUrl);
         apunte.setNombreArchivo(nombreArchivo);
@@ -106,7 +105,6 @@ public class ApunteService {
 
         ApunteEntity saved = apunteRepository.save(apunte);
         saved.setUsuario(usuario);
-        saved.setCarrera(carrera);
         saved.setAsignatura(asignatura);
 
         return apunteMapper.toResponse(saved, null);

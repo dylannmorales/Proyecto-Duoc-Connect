@@ -25,6 +25,10 @@ Surgieron después del backlog de Fase 1 (que llega hasta HU-17) y continúan su
 | HU-19 | Administrador del grupo | Editar el grupo de estudio | Solo el administrador del grupo ve "Editar grupo" y puede cambiar nombre, descripción, carrera, asignatura, cupo y privacidad. El cupo no puede quedar bajo la cantidad de integrantes actuales y la asignatura debe ser de la carrera elegida. Un miembro sin ese rol recibe 403. |
 | HU-20 | Miembro del grupo | Compartir el grupo mediante una invitación por correo | "Compartir" abre un modal donde se agregan correos `@duocuc.cl`, se ven las personas con acceso (nombre, correo y rol) y "Copiar vínculo". Cada invitado recibe un correo con el vínculo `/grupos/unirse/{código}`; si ya tiene cuenta, también una notificación. Los correos no institucionales se rechazan y los que ya son miembros se omiten, informando el resultado de cada uno. |
 
+## Modelo de datos
+
+El diagrama entidad-relación, el detalle de las tablas y la justificación de la normalización (3FN) están en [docs/modelo-datos.md](docs/modelo-datos.md) (diagrama también en [docs/modelo-er.svg](docs/modelo-er.svg)).
+
 ## Stack
 
 | Capa | Tecnología |

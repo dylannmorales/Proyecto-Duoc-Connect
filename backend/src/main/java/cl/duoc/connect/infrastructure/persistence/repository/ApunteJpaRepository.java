@@ -17,21 +17,21 @@ public interface ApunteJpaRepository extends JpaRepository<ApunteEntity, UUID> {
     @Query("""
             SELECT a FROM ApunteEntity a
             JOIN FETCH a.usuario
-            JOIN FETCH a.carrera
-            JOIN FETCH a.asignatura
+            JOIN FETCH a.asignatura asig
+            JOIN FETCH asig.carrera
             WHERE a.id = :id
             """)
     Optional<ApunteEntity> findByIdWithDetails(@Param("id") UUID id);
 
-    @EntityGraph(attributePaths = {"usuario", "carrera", "asignatura"})
+    @EntityGraph(attributePaths = {"usuario", "asignatura", "asignatura.carrera"})
     @Query(value = """
             SELECT a FROM ApunteEntity a
-            WHERE (:carreraId IS NULL OR a.carrera.id = :carreraId)
+            WHERE (:carreraId IS NULL OR a.asignatura.carrera.id = :carreraId)
             AND (:asignaturaId IS NULL OR a.asignatura.id = :asignaturaId)
             """,
             countQuery = """
             SELECT COUNT(a) FROM ApunteEntity a
-            WHERE (:carreraId IS NULL OR a.carrera.id = :carreraId)
+            WHERE (:carreraId IS NULL OR a.asignatura.carrera.id = :carreraId)
             AND (:asignaturaId IS NULL OR a.asignatura.id = :asignaturaId)
             """)
     Page<ApunteEntity> buscarApuntes(
@@ -39,17 +39,17 @@ public interface ApunteJpaRepository extends JpaRepository<ApunteEntity, UUID> {
             @Param("asignaturaId") UUID asignaturaId,
             Pageable pageable);
 
-    @EntityGraph(attributePaths = {"usuario", "carrera", "asignatura"})
+    @EntityGraph(attributePaths = {"usuario", "asignatura", "asignatura.carrera"})
     @Query(value = """
             SELECT a FROM ApunteEntity a
-            WHERE (:carreraId IS NULL OR a.carrera.id = :carreraId)
+            WHERE (:carreraId IS NULL OR a.asignatura.carrera.id = :carreraId)
             AND (:asignaturaId IS NULL OR a.asignatura.id = :asignaturaId)
             AND (LOWER(a.titulo) LIKE LOWER(CONCAT('%', :q, '%'))
                 OR LOWER(COALESCE(a.descripcion, '')) LIKE LOWER(CONCAT('%', :q, '%')))
             """,
             countQuery = """
             SELECT COUNT(a) FROM ApunteEntity a
-            WHERE (:carreraId IS NULL OR a.carrera.id = :carreraId)
+            WHERE (:carreraId IS NULL OR a.asignatura.carrera.id = :carreraId)
             AND (:asignaturaId IS NULL OR a.asignatura.id = :asignaturaId)
             AND (LOWER(a.titulo) LIKE LOWER(CONCAT('%', :q, '%'))
                 OR LOWER(COALESCE(a.descripcion, '')) LIKE LOWER(CONCAT('%', :q, '%')))
@@ -60,7 +60,7 @@ public interface ApunteJpaRepository extends JpaRepository<ApunteEntity, UUID> {
             @Param("q") String q,
             Pageable pageable);
 
-    @EntityGraph(attributePaths = {"usuario", "carrera", "asignatura"})
+    @EntityGraph(attributePaths = {"usuario", "asignatura", "asignatura.carrera"})
     @Query(value = """
             SELECT a FROM ApunteEntity a
             ORDER BY a.createdAt DESC

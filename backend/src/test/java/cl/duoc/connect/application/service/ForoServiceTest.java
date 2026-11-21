@@ -94,7 +94,6 @@ class ForoServiceTest {
         pregunta.setUsuario(autor);
         pregunta.setCarrera(carrera);
         pregunta.setAsignatura(asignatura);
-        pregunta.setTematicaGeneral(false);
         pregunta.setVotos(0);
         return pregunta;
     }

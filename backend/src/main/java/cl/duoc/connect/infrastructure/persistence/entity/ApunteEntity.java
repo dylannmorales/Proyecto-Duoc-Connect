@@ -35,10 +35,6 @@ public class ApunteEntity {
     private UsuarioEntity usuario;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "carrera_id", nullable = false)
-    private CarreraEntity carrera;
-
-    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "asignatura_id", nullable = false)
     private AsignaturaEntity asignatura;
 
@@ -80,5 +76,10 @@ public class ApunteEntity {
         if (descargas == null) {
             descargas = 0;
         }
+    }
+
+    /** La carrera no se guarda en apuntes (3FN): se obtiene desde la asignatura. */
+    public CarreraEntity getCarrera() {
+        return asignatura == null ? null : asignatura.getCarrera();
     }
 }

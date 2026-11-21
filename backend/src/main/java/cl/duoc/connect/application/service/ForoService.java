@@ -77,7 +77,6 @@ public class ForoService {
         pregunta.setUsuario(usuario);
         pregunta.setCarrera(carrera);
         pregunta.setAsignatura(asignatura);
-        pregunta.setTematicaGeneral(request.isTematicaGeneral());
         if (imagen != null && !imagen.isEmpty()) {
             pregunta.setImagenUrl(fileStoragePort.storeForoImage(imagen));
         }
@@ -259,7 +258,7 @@ public class ForoService {
                 .carreraNombre(p.getCarrera().getNombre())
                 .asignaturaId(asignatura == null ? null : asignatura.getId())
                 .asignaturaNombre(asignatura == null ? null : asignatura.getNombre())
-                .tematicaGeneral(Boolean.TRUE.equals(p.getTematicaGeneral()))
+                .tematicaGeneral(p.isTematicaGeneral())
                 .imagenUrl(p.getImagenUrl())
                 .votos(p.getVotos())
                 .votado(votado)
