@@ -1,3 +1,5 @@
+import { useAuth } from '@/features/auth/hooks/useAuth';
+import { puedeEditarGrupo } from '@/features/groups/utils/permisos';
 import { IconPencil } from '@/shared/components/ui/Icons';
 import { Link } from 'react-router-dom';
 import type { Grupo } from '@/features/groups/types/group.types';
@@ -9,7 +11,8 @@ interface GroupCardProps {
 }
 
 export function GroupCard({ grupo, onJoin, onEdit }: GroupCardProps) {
-  const puedeEditar = grupo.rolEnGrupo === 'ADMIN_GRUPO' && !!onEdit;
+  const { user } = useAuth();
+  const puedeEditar = !!onEdit && puedeEditarGrupo(grupo, user?.id);
   return (
     <article className="flex flex-col card card-hover p-5">
       <div className="mb-3 flex items-start justify-between gap-3">

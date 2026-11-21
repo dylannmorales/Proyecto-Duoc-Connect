@@ -50,14 +50,9 @@ export function ForumPage() {
 
   async function handleAsk(payload: CrearPreguntaPayload) {
     setError('');
-    try {
-      const pregunta = await crearPregunta(payload);
-      await queryClient.invalidateQueries({ queryKey: ['preguntas'] });
-      navigate(`/foro/${pregunta.id}`);
-    } catch (err) {
-      setError(getApiErrorMessage(err));
-      throw err;
-    }
+    const pregunta = await crearPregunta(payload);
+    await queryClient.invalidateQueries({ queryKey: ['preguntas'] });
+    navigate(`/foro/${pregunta.id}`);
   }
 
   const preguntas = preguntasQuery.data?.content ?? [];

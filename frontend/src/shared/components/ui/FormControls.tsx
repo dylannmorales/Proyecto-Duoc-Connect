@@ -103,9 +103,11 @@ interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
   label: string;
   error?: string;
   hint?: ReactNode;
+  /** Muestra "n / máximo" bajo el campo (requiere maxLength). */
+  showCount?: boolean;
 }
 
-export function Textarea({ label, error, hint, id, className = '', rows = 4, ...props }: TextareaProps) {
+export function Textarea({ label, error, hint, id, className = '', rows = 4, showCount, ...props }: TextareaProps) {
   const inputId = id ?? props.name;
   return (
     <div>
@@ -120,7 +122,18 @@ export function Textarea({ label, error, hint, id, className = '', rows = 4, ...
         className={`field-input resize-y ${error ? 'field-input-error' : ''} ${className}`}
         {...props}
       />
-      <FieldMessage error={error} hint={hint} />
+      {showCount && props.maxLength ? (
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <FieldMessage error={error} hint={hint} />
+          </div>
+          <span className="mt-1.5 shrink-0 text-xs tabular-nums text-gray-400">
+            {String(props.value ?? '').length} / {props.maxLength}
+          </span>
+        </div>
+      ) : (
+        <FieldMessage error={error} hint={hint} />
+      )}
     </div>
   );
 }

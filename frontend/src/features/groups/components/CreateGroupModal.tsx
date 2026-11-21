@@ -1,10 +1,13 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useAuth } from '@/features/auth/hooks/useAuth';
 import { getCarreras } from '@/features/auth/services/authService';
 import { getAsignaturas } from '@/features/groups/services/groupsService';
 import type { CreateGrupoPayload, Grupo } from '@/features/groups/types/group.types';
-import { Button, FormAlert, Input, Select } from '@/shared/components/ui/FormControls';
+import { Input, Select, Textarea } from '@/shared/components/ui/FormControls';
+import { ChoiceChips, FormModal, FormSection, SwitchField } from '@/shared/components/ui/FormKit';
 import { EmailChipsInput } from '@/shared/components/ui/EmailChipsInput';
+import { IconLock, IconUsers } from '@/shared/components/ui/Icons';
 import { sonCorreosValidos } from '@/shared/utils/email';
 import { getApiErrorMessage } from '@/shared/utils/errors';
 
@@ -20,32 +23,38 @@ interface CreateGroupModalProps {
 const MAX_MIEMBROS_OPCIONES = [5, 10, 15, 20, 30, 50];
 
 export function CreateGroupModal({ open, onClose, onSubmit, grupo }: CreateGroupModalProps) {
+  const { user } = useAuth();
   const editando = !!grupo;
   const [nombre, setNombre] = useState('');
   const [descripcion, setDescripcion] = useState('');
   const [carreraId, setCarreraId] = useState('');
   const [asignaturaId, setAsignaturaId] = useState('');
-  const [maxMiembros, setMaxMiembros] = useState('20');
+  const [maxMiembros, setMaxMiembros] = useState(20);
   const [privado, setPrivado] = useState(false);
   const [invitados, setInvitados] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [intentoEnviar, setIntentoEnviar] = useState(false);
 
+  // Al abrir: si se edita, se cargan los datos del grupo; si se crea, se propone la carrera del usuario.
   useEffect(() => {
-    if (!open || !grupo) return;
-    setNombre(grupo.nombre);
-    setDescripcion(grupo.descripcion ?? '');
-    setCarreraId(grupo.carreraId);
-    setAsignaturaId(grupo.asignaturaId ?? '');
-    setMaxMiembros(String(grupo.maxMiembros));
-    setPrivado(grupo.privado);
+    if (!open) return;
+    if (grupo) {
+      setNombre(grupo.nombre);
+      setDescripcion(grupo.descripcion ?? '');
+      setCarreraId(grupo.carreraId);
+      setAsignaturaId(grupo.asignaturaId ?? '');
+      setMaxMiembros(grupo.maxMiembros);
+      setPrivado(grupo.privado);
+    } else if (!carreraId && user?.carreraId) {
+      setCarreraId(user.carreraId);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, grupo]);
 
-  const opcionesMaxMiembros = Array.from(
-    new Set([...MAX_MIEMBROS_OPCIONES, ...(grupo ? [grupo.maxMiembros] : [])]),
-  )
-    .sort((a, b) => a - b)
-    .filter((n) => !grupo || n >= grupo.miembrosActuales);
+  const opcionesMaxMiembros = Array.from(new Set([...MAX_MIEMBROS_OPCIONES, ...(grupo ? [grupo.maxMiembros] : [])])).sort(
+    (a, b) => a - b,
+  );
 
   const carrerasQuery = useQuery({ queryKey: ['carreras'], queryFn: getCarreras });
   const asignaturasQuery = useQuery({
@@ -54,35 +63,60 @@ export function CreateGroupModal({ open, onClose, onSubmit, grupo }: CreateGroup
     enabled: !!carreraId,
   });
 
-  if (!open) return null;
+  const nombreError = intentoEnviar && !nombre.trim() ? 'Ponle un nombre al grupo' : undefined;
+  const carreraError = intentoEnviar && !carreraId ? 'Elige la carrera del grupo' : undefined;
+
+  function limpiar() {
+    setNombre('');
+    setDescripcion('');
+    setCarreraId(user?.carreraId ?? '');
+    setAsignaturaId('');
+    setMaxMiembros(20);
+    setPrivado(false);
+    setInvitados([]);
+    setError('');
+    setIntentoEnviar(false);
+  }
+
+  function cerrar() {
+    if (!editando) limpiar();
+    else {
+      setInvitados([]);
+      setError('');
+      setIntentoEnviar(false);
+    }
+    onClose();
+  }
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
+    setIntentoEnviar(true);
     setError('');
+    if (!nombre.trim() || !carreraId) return;
     if (!sonCorreosValidos(invitados)) {
       setError('Revisa los correos: solo se puede invitar a correos @duocuc.cl.');
       return;
     }
     setLoading(true);
     try {
-      await onSubmit({
-        nombre,
-        descripcion: descripcion || undefined,
-        carreraId,
-        asignaturaId: asignaturaId || undefined,
-        maxMiembros: Number(maxMiembros),
-        privado,
-      }, invitados);
-      setInvitados([]);
-      onClose();
-      if (!editando) {
-        setNombre('');
-        setDescripcion('');
-        setCarreraId('');
-        setAsignaturaId('');
-        setMaxMiembros('20');
-        setPrivado(false);
+      await onSubmit(
+        {
+          nombre: nombre.trim(),
+          descripcion: descripcion.trim() || undefined,
+          carreraId,
+          asignaturaId: asignaturaId || undefined,
+          maxMiembros,
+          privado,
+        },
+        invitados,
+      );
+      if (editando) {
+        setInvitados([]);
+        setIntentoEnviar(false);
+      } else {
+        limpiar();
       }
+      onClose();
     } catch (err) {
       setError(getApiErrorMessage(err, editando ? 'No se pudo guardar el grupo' : 'No se pudo crear el grupo'));
     } finally {
@@ -90,40 +124,54 @@ export function CreateGroupModal({ open, onClose, onSubmit, grupo }: CreateGroup
     }
   }
 
-  function cerrar() {
-    setInvitados([]);
-    setError('');
-    onClose();
-  }
+  const submitLabel = editando
+    ? invitados.length > 0
+      ? 'Guardar e invitar'
+      : 'Guardar cambios'
+    : invitados.length > 0
+      ? 'Crear e invitar'
+      : 'Crear grupo';
 
   return (
-    <div className="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="group-form-title">
-      <div className="modal-panel max-w-lg">
-        <div className="mb-6 flex items-center justify-between">
-          <h2 id="group-form-title" className="text-xl font-bold">
-            {editando ? 'Editar grupo de estudio' : 'Crear grupo de estudio'}
-          </h2>
-          <button type="button" onClick={cerrar} className="icon-btn" aria-label="Cerrar">
-            ✕
-          </button>
-        </div>
+    <FormModal
+      open={open}
+      title={editando ? 'Editar grupo de estudio' : 'Crear grupo de estudio'}
+      subtitle={editando ? 'Los cambios se verán al instante para todos los integrantes.' : 'Reúne a tus compañeros para estudiar y coordinar por chat.'}
+      icon={<IconUsers className="h-5 w-5" />}
+      onClose={cerrar}
+      onSubmit={handleSubmit}
+      submitLabel={submitLabel}
+      submitting={loading}
+      error={error}
+    >
+      <FormSection title="Información básica">
+        <Input
+          label="Nombre del grupo"
+          name="nombre"
+          value={nombre}
+          onChange={(e) => setNombre(e.target.value)}
+          maxLength={150}
+          placeholder="Ej: Estudio para la prueba de Bases de Datos"
+          error={nombreError}
+          required
+          autoFocus={!editando}
+        />
+        <Textarea
+          label="Descripción"
+          id="descripcion"
+          name="descripcion"
+          value={descripcion}
+          onChange={(e) => setDescripcion(e.target.value)}
+          rows={3}
+          maxLength={500}
+          showCount
+          placeholder="¿Qué van a estudiar? ¿Cuándo se juntan?"
+          hint="Opcional. Ayuda a que otros sepan si el grupo les sirve."
+        />
+      </FormSection>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <Input label="Nombre del grupo" name="nombre" value={nombre} onChange={(e) => setNombre(e.target.value)} required />
-
-          <div className="space-y-1">
-            <label htmlFor="descripcion" className="field-label">
-              Descripción
-            </label>
-            <textarea
-              id="descripcion"
-              value={descripcion}
-              onChange={(e) => setDescripcion(e.target.value)}
-              rows={3}
-              className="field-input"
-            />
-          </div>
-
+      <FormSection title="Carrera y asignatura">
+        <div className="grid gap-4 sm:grid-cols-2">
           <Select
             label="Carrera"
             name="carreraId"
@@ -133,73 +181,58 @@ export function CreateGroupModal({ open, onClose, onSubmit, grupo }: CreateGroup
               setAsignaturaId('');
             }}
             options={(carrerasQuery.data ?? []).map((c) => ({ value: c.id, label: c.nombre }))}
+            error={carreraError}
             required
           />
-
           <Select
-            label="Asignatura (opcional)"
+            label="Asignatura"
             name="asignaturaId"
             value={asignaturaId}
             onChange={(e) => setAsignaturaId(e.target.value)}
             options={(asignaturasQuery.data ?? []).map((a) => ({ value: a.id, label: a.nombre }))}
-            placeholder="Sin asignatura específica"
+            placeholder={carreraId ? 'Sin asignatura específica' : 'Primero elige una carrera'}
+            disabled={!carreraId}
+            hint="Opcional"
           />
+        </div>
+      </FormSection>
 
-          <Select
-            label="Máximo de miembros"
-            name="maxMiembros"
-            value={maxMiembros}
-            onChange={(e) => setMaxMiembros(e.target.value)}
-            options={opcionesMaxMiembros.map((n) => ({ value: String(n), label: String(n) }))}
-            required
-          />
-          {editando && (
-            <p className="-mt-2 text-xs text-gray-500">
-              No puede ser menor que los {grupo.miembrosActuales} integrantes actuales.
-            </p>
-          )}
+      <FormSection title="Integrantes y privacidad">
+        <ChoiceChips
+          label="Máximo de integrantes"
+          value={maxMiembros}
+          onChange={setMaxMiembros}
+          options={opcionesMaxMiembros.map((n) => ({
+            value: n,
+            label: String(n),
+            disabled: !!grupo && n < grupo.miembrosActuales,
+          }))}
+          hint={editando ? `No puede ser menor que los ${grupo.miembrosActuales} integrantes actuales.` : undefined}
+          required
+        />
+        <SwitchField
+          label="Grupo privado"
+          description={
+            privado
+              ? 'Solo se une quien tenga el enlace o el código de invitación.'
+              : 'Cualquier estudiante puede encontrarlo y unirse.'
+          }
+          checked={privado}
+          onChange={setPrivado}
+          icon={<IconLock className="h-4 w-4" />}
+        />
+      </FormSection>
 
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={privado}
-              onChange={(e) => setPrivado(e.target.checked)}
-              className="checkbox"
-            />
-            Grupo privado (requiere código de invitación)
-          </label>
-
-          <div className="border-t border-gray-100 pt-4">
-            <p className="mb-1 text-sm font-semibold text-gray-900">
-              {editando ? 'Invitar a más personas' : 'Invitar personas'}
-              <span className="font-normal text-gray-500"> (opcional)</span>
-            </p>
-            <p className="mb-3 text-xs text-gray-500">
-              {editando
-                ? 'Al guardar, les llegará un correo con el enlace para unirse.'
-                : 'Al crear el grupo, les llegará un correo con el enlace para unirse.'}
-            </p>
-            <EmailChipsInput id="grupo-invitados" value={invitados} onChange={setInvitados} />
-          </div>
-
-          {error && <FormAlert message={error} />}
-
-          <div className="flex justify-end gap-3 pt-2">
-            <Button type="button" variant="secondary" onClick={cerrar}>
-              Cancelar
-            </Button>
-            <Button type="submit" loading={loading}>
-              {editando
-                ? invitados.length > 0
-                  ? 'Guardar e invitar'
-                  : 'Guardar cambios'
-                : invitados.length > 0
-                  ? 'Crear e invitar'
-                  : 'Crear grupo'}
-            </Button>
-          </div>
-        </form>
-      </div>
-    </div>
+      <FormSection
+        title={editando ? 'Invitar a más personas' : 'Invitar personas'}
+        description={
+          editando
+            ? 'Opcional. Al guardar les llegará un correo con el enlace para unirse.'
+            : 'Opcional. Al crear el grupo les llegará un correo con el enlace para unirse.'
+        }
+      >
+        <EmailChipsInput id="grupo-invitados" value={invitados} onChange={setInvitados} />
+      </FormSection>
+    </FormModal>
   );
 }

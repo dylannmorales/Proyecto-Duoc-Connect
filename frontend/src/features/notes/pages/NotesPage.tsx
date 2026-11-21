@@ -53,14 +53,9 @@ export function NotesPage() {
 
   async function handleUpload(payload: UploadApuntePayload) {
     setError('');
-    try {
-      await uploadApunte(payload);
-      setPage(0);
-      await queryClient.invalidateQueries({ queryKey: ['apuntes'] });
-    } catch (err) {
-      setError(getApiErrorMessage(err));
-      throw err;
-    }
+    await uploadApunte(payload);
+    setPage(0);
+    await queryClient.invalidateQueries({ queryKey: ['apuntes'] });
   }
 
   async function handleDownload(apunte: Apunte) {

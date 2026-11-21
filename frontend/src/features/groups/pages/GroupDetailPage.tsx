@@ -1,3 +1,5 @@
+import { useAuth } from '@/features/auth/hooks/useAuth';
+import { puedeEditarGrupo } from '@/features/groups/utils/permisos';
 import { IconExit, IconPencil, IconShare } from '@/shared/components/ui/Icons';
 import { BackButton, BackNav } from '@/shared/components/ui/BackNav';
 import { CopyLinkButton } from '@/shared/components/ui/CopyLinkButton';
@@ -36,7 +38,9 @@ export function GroupDetailPage() {
   });
 
   const grupo = grupoQuery.data;
+  const { user } = useAuth();
   const esAdmin = grupo?.rolEnGrupo === 'ADMIN_GRUPO';
+  const puedeEditar = !!grupo && puedeEditarGrupo(grupo, user?.id);
 
   async function handleEdit(payload: CreateGrupoPayload, invitados: string[]) {
     setError('');
@@ -124,7 +128,7 @@ export function GroupDetailPage() {
           </div>
 
           <div className="flex shrink-0 flex-wrap items-center gap-2">
-            {esAdmin && (
+            {puedeEditar && (
               <Button variant="secondary" icon={<IconPencil className="h-4 w-4" />} onClick={() => setShowEdit(true)}>
                 Editar
               </Button>
@@ -178,7 +182,7 @@ export function GroupDetailPage() {
         onClose={() => setShowLeave(false)}
         onConfirm={handleLeave}
       />
-      {esAdmin && (
+      {puedeEditar && (
         <CreateGroupModal grupo={grupo} open={showEdit} onClose={() => setShowEdit(false)} onSubmit={handleEdit} />
       )}
     </div>
