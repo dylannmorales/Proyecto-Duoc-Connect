@@ -1,6 +1,7 @@
+import { BackButton, BackNav } from '@/shared/components/ui/BackNav';
 import { useState, type FormEvent } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Link, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { VoteButton } from '@/features/forum/components/VoteButton';
 import {
@@ -60,11 +61,11 @@ export function QuestionDetailPage() {
 
   if (preguntaQuery.isError || !preguntaQuery.data) {
     return (
-      <div className="space-y-4">
-        <FormAlert message={getApiErrorMessage(preguntaQuery.error, 'No se encontró la pregunta')} />
-        <Link to="/foro" className="text-sm font-semibold text-yellow-700 hover:underline">
-          ← Volver al foro
-        </Link>
+      <div className="card mx-auto max-w-md p-8 text-center">
+        <p className="text-lg font-semibold">{getApiErrorMessage(preguntaQuery.error, 'No se encontró la pregunta')}</p>
+        <div className="mt-5">
+          <BackButton to="/foro" label="Ir al foro" />
+        </div>
       </div>
     );
   }
@@ -75,9 +76,7 @@ export function QuestionDetailPage() {
 
   return (
     <div className="space-y-6">
-      <Link to="/foro" className="text-sm font-semibold text-yellow-700 hover:underline">
-        ← Volver al foro
-      </Link>
+      <BackNav to="/foro" parentLabel="Foro académico" current={pregunta.titulo} />
 
       {error && <FormAlert message={error} />}
 

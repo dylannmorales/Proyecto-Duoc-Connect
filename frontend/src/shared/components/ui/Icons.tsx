@@ -95,3 +95,7 @@ export const IconGlobe = base(
 );
 export const IconPencil = base(<path d="m4 20 4-1 11-11-3-3L5 16l-1 4Zm10-13 3 3" />);
 export const IconShare = base(<path d="M16 8a3 3 0 1 0-2.8-4M8 12a3 3 0 1 0 0 .01M16 16a3 3 0 1 0 0 .01M10.6 10.7l2.8-1.5M10.6 13.3l2.8 1.5" />);
+export const IconChevronLeft = base(<path d="m15 18-6-6 6-6" />);
+export const IconChevronRight = base(<path d="m9 18 6-6-6-6" />);
+export const IconCopy = base(<path d="M9 9h10v10H9zM5 15V5h10" />);
+export const IconExit = base(<path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M9 16l-4-4 4-4M5 12h10" />);
