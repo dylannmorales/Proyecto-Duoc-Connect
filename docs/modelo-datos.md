@@ -1,6 +1,6 @@
 # Modelo de datos de Duoc Connect
 
-Base de datos **PostgreSQL 16**. El esquema se versiona con **Flyway** (`backend/src/main/resources/db/migration`, V1 a V7) y se crea solo al iniciar el backend.
+Base de datos **PostgreSQL 16**. El esquema se versiona con **Flyway** (`backend/src/main/resources/db/migration`, V1 a V8) y se crea solo al iniciar el backend.
 
 **Resumen para la defensa:** el modelo está en **tercera forma normal (3FN)**. Lo único que se guarda ya calculado son algunos contadores (votos, valoraciones y descargas). Es una desnormalización controlada que se hace a propósito por rendimiento, y la base valida su rango con restricciones `CHECK`.
 
@@ -22,6 +22,8 @@ erDiagram
     USUARIOS ||--o{ DISPONIBILIDADES : "horarios"
     USUARIOS ||--o{ PASSWORD_RESET_TOKENS : ""
     USUARIOS ||--o{ NOTIFICACIONES : "recibe"
+    GRUPOS_ESTUDIO ||--o{ INVITACIONES_DIRECTAS : ""
+    USUARIOS ||--o{ INVITACIONES_DIRECTAS : "invita / es invitado"
 
     USUARIOS ||--o{ GRUPOS_ESTUDIO : "crea"
     CARRERAS ||--o{ GRUPOS_ESTUDIO : ""
@@ -167,6 +169,15 @@ erDiagram
         varchar titulo
         boolean leida
     }
+    INVITACIONES_DIRECTAS {
+        uuid id PK
+        uuid grupo_id FK
+        uuid invitador_id FK
+        uuid invitado_id FK
+        varchar mensaje
+        varchar estado
+        timestamptz respondida_at
+    }
     PASSWORD_RESET_TOKENS {
         uuid id PK
         uuid usuario_id FK
@@ -183,7 +194,7 @@ erDiagram
 | Catálogos | `carreras`, `sedes`, `asignaturas`, `habilidades` | Datos de referencia que el resto de las tablas usa por clave foránea. |
 | Usuarios | `usuarios`, `password_reset_tokens`, `notificaciones` | Cuenta, rol (estudiante o administrador), recuperación de contraseña y avisos in-app. |
 | Compañeros (HU-13/14) | `perfiles_proyecto`, `usuario_asignaturas`, `usuario_habilidades`, `disponibilidades` | Perfil para buscar compañeros y calcular la compatibilidad. |
-| Grupos | `grupos_estudio`, `grupo_miembros`, `mensajes_grupo` | Grupos de estudio, integrantes con su rol y chat. |
+| Grupos | `grupos_estudio`, `grupo_miembros`, `mensajes_grupo`, `invitaciones_directas` | Grupos de estudio, integrantes con su rol, chat e invitaciones enviadas desde el perfil de un compañero (pendiente, aceptada o rechazada). |
 | Apuntes | `apuntes`, `valoraciones_apunte` | Banco de apuntes en PDF y valoraciones de 1 a 5. |
 | Foro | `preguntas`, `respuestas`, `votos_pregunta`, `votos_respuesta` | Preguntas, respuestas, respuesta aceptada y votos. |
 
@@ -215,8 +226,9 @@ Ningún atributo que no sea clave depende de otro atributo que tampoco lo sea:
 
 ## 4. Reglas de integridad en la base
 
-- **Claves foráneas** en todas las relaciones, con `ON DELETE CASCADE` donde el hijo no tiene sentido sin el padre: miembros, mensajes, votos, valoraciones, perfil y notificaciones.
+- **Claves foráneas** en todas las relaciones, con `ON DELETE CASCADE` donde el hijo no tiene sentido sin el padre: miembros, mensajes, votos, valoraciones, perfil, notificaciones e invitaciones directas.
 - **Únicos:** `usuarios.email`, `carreras.codigo`, `carreras.nombre`, `sedes.nombre`, `habilidades.nombre`, `grupos_estudio.codigo_invitacion`, `password_reset_tokens.token` y `(asignaturas.codigo, carrera_id)`.
+- **Una sola invitación pendiente por persona y grupo:** índice único parcial `ux_invitacion_pendiente ON invitaciones_directas(grupo_id, invitado_id) WHERE estado = 'PENDIENTE'`, y CHECK para que nadie se invite a sí mismo.
 - **Una sola respuesta aceptada por pregunta:** índice único parcial `uq_respuesta_aceptada_por_pregunta ON respuestas(pregunta_id) WHERE aceptada`.
 - **Coherencia carrera-asignatura:** claves foráneas compuestas `fk_preguntas_asignatura_carrera` y `fk_grupos_asignatura_carrera`.
 - **Reglas de dominio (CHECK):** semestre de 1 a 12, máximo de miembros de 2 a 50, puntuación de 1 a 5, día de la semana de 0 a 6, `hora_fin > hora_inicio` y contadores no negativos.
@@ -233,3 +245,4 @@ Ningún atributo que no sea clave depende de otro atributo que tampoco lo sea:
 | V5 | Notificación por invitación a un grupo. |
 | V6 | Notificación por apunte compartido. |
 | V7 | Normalización a 3FN: quita `apuntes.carrera_id` y `preguntas.tematica_general`; agrega FK compuestas, una sola respuesta aceptada, nombres únicos en catálogos, CHECK de contadores e índices. |
+| V8 | Invitaciones directas a un grupo desde el perfil de un compañero (`invitaciones_directas`) y sus notificaciones (`INVITACION_DIRECTA`, `RESPUESTA_INVITACION`). |
