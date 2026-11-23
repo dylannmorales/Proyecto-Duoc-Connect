@@ -4,9 +4,10 @@ import cl.duoc.connect.infrastructure.persistence.repository.GrupoMiembroJpaRepo
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
+import org.springframework.messaging.MessageHandler;
 import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
-import org.springframework.messaging.support.ChannelInterceptor;
+import org.springframework.messaging.support.ExecutorChannelInterceptor;
 import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
@@ -21,9 +22,21 @@ import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * Seguridad de las tramas STOMP del chat.
+ *
+ * <ul>
+ *   <li>{@code preSend} (hilo de la conexión WebSocket): autentica el CONNECT con el JWT y
+ *       valida que cada SUBSCRIBE sea a un grupo del que el usuario es miembro.</li>
+ *   <li>{@code beforeHandle}/{@code afterMessageHandled} (hilo del pool que ejecuta el
+ *       {@code @MessageMapping}): ponen y quitan el usuario en el {@link SecurityContextHolder}.
+ *       Hay que hacerlo aquí porque el {@code SecurityContextHolder} es por hilo y el handler
+ *       no corre en el mismo hilo que {@code preSend}.</li>
+ * </ul>
+ */
 @Component
 @RequiredArgsConstructor
-public class JwtStompChannelInterceptor implements ChannelInterceptor {
+public class JwtStompChannelInterceptor implements ExecutorChannelInterceptor {
 
     private static final Pattern GRUPO_TOPIC_PATTERN =
             Pattern.compile("^/topic/grupos/([0-9a-fA-F\\-]{36})$");
@@ -47,18 +60,23 @@ public class JwtStompChannelInterceptor implements ChannelInterceptor {
             validateSubscription(accessor);
         }
 
-        if (StompCommand.SEND.equals(accessor.getCommand()) || StompCommand.MESSAGE.equals(accessor.getCommand())) {
-            Authentication authentication = (Authentication) accessor.getUser();
-            if (authentication != null) {
-                SecurityContextHolder.getContext().setAuthentication(authentication);
-            }
-        }
-
-        if (StompCommand.DISCONNECT.equals(accessor.getCommand())) {
-            SecurityContextHolder.clearContext();
-        }
-
         return message;
+    }
+
+    /** Corre en el hilo que ejecutará el handler: deja disponible al usuario autenticado para los servicios. */
+    @Override
+    public Message<?> beforeHandle(Message<?> message, MessageChannel channel, MessageHandler handler) {
+        StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
+        if (accessor != null && accessor.getUser() instanceof Authentication authentication) {
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+        }
+        return message;
+    }
+
+    /** Limpia el contexto para que el hilo del pool no quede con el usuario de otra sesión. */
+    @Override
+    public void afterMessageHandled(Message<?> message, MessageChannel channel, MessageHandler handler, Exception ex) {
+        SecurityContextHolder.clearContext();
     }
 
     private void authenticate(StompHeaderAccessor accessor) {
@@ -74,8 +92,8 @@ public class JwtStompChannelInterceptor implements ChannelInterceptor {
         UsernamePasswordAuthenticationToken authentication =
                 new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
 
+        // Queda asociado a la sesión STOMP; beforeHandle lo pasa al SecurityContext en cada mensaje.
         accessor.setUser(authentication);
-        SecurityContextHolder.getContext().setAuthentication(authentication);
     }
 
     private void validateSubscription(StompHeaderAccessor accessor) {

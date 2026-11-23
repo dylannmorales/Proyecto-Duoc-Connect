@@ -33,10 +33,18 @@ Surgieron después del backlog de Fase 1 (que llega hasta HU-17) y continúan su
 
 Cada push y cada pull request ejecutan automáticamente (GitHub Actions, `.github/workflows/ci.yml`):
 
-- **Backend:** las 135 pruebas unitarias con JUnit 5 y Mockito, más el reporte de cobertura JaCoCo (68,6 % de líneas). El resumen aparece en la pestaña *Actions* y el reporte completo se descarga como artefacto.
+- **Backend:** las 140 pruebas unitarias con JUnit 5 y Mockito, más el reporte de cobertura JaCoCo (70,4 % de líneas). El resumen aparece en la pestaña *Actions* y el reporte completo se descarga como artefacto.
 - **Frontend:** lint, chequeo de tipos y build.
 
 Las pruebas cubren registro, inicio de sesión y recuperación de contraseña, perfil, grupos, chat, notificaciones, apuntes, foro, compañeros y su cálculo de compatibilidad, las invitaciones directas a grupos, el panel de administración, la seguridad JWT, el manejo de errores y el almacenamiento de archivos. Además de las pruebas unitarias, el informe QA v2.1 documenta 94 pruebas de API, 38 pruebas E2E con Playwright y 8 pruebas de integridad de la base de datos: 268 casos en total, todos aprobados.
+
+## Documentación técnica
+
+| Documento | Contenido |
+|-----------|-----------|
+| [backend/README.md](backend/README.md) | Arquitectura en capas con puertos y adaptadores, patrones de diseño, seguridad JWT y WebSocket, contrato de la API, algoritmo de compatibilidad, chat en tiempo real, invitaciones, apuntes en S3, foro y pruebas |
+| [frontend/README.md](frontend/README.md) | Organización por funcionalidades, manejo de sesión y renovación del token, rutas protegidas, React Query, chat con respaldo, sistema de diseño y build |
+| [docs/modelo-datos.md](docs/modelo-datos.md) | Modelo de datos, diagrama entidad-relación y normalización (3FN) |
 
 ## Modelo de datos
 
@@ -334,7 +342,7 @@ duoc-connect/
 ├── .github/workflows/   # CI: pruebas, lint y build en cada push y PR
 ├── backend/            # API REST Spring Boot
 │   ├── src/main/resources/db/migration/  # Flyway V1 a V8
-│   ├── src/test/java/   # 135 pruebas unitarias (JUnit 5 + Mockito)
+│   ├── src/test/java/   # 140 pruebas unitarias (JUnit 5 + Mockito)
 │   └── src/main/java/cl/duoc/connect/
 │       ├── presentation/    # controladores, configuración, manejo de errores
 │       ├── application/     # servicios, DTOs, mappers, puertos
@@ -358,7 +366,7 @@ duoc-connect/
 | `docker compose up -d --build` | Compila y levanta todo |
 | `docker compose down` | Detiene todo (conserva los datos) |
 | `docker compose logs -f backend` | Muestra los logs del backend |
-| `docker run --rm -v "${PWD}/backend:/app" -w /app maven:3.9-eclipse-temurin-17 mvn test` | Ejecuta las 135 pruebas del backend sin instalar Java ni Maven (desde la raíz del repo; el reporte de cobertura queda en `backend/target/site/jacoco/index.html`) |
+| `docker run --rm -v "${PWD}/backend:/app" -w /app maven:3.9-eclipse-temurin-17 mvn test` | Ejecuta las 140 pruebas del backend sin instalar Java ni Maven (desde la raíz del repo; el reporte de cobertura queda en `backend/target/site/jacoco/index.html`) |
 
 ## Desarrollo sin Docker (opcional)
 
@@ -371,7 +379,7 @@ docker compose up -d postgres
 | Comando | Dónde | Qué hace |
 |---------|-------|----------|
 | `mvn spring-boot:run` | `backend/` | Inicia la API (lee `.env` y `.env.local` de la raíz) |
-| `mvn test` | `backend/` | Ejecuta las 135 pruebas unitarias y genera el reporte de cobertura en `target/site/jacoco/index.html` (68,6 % de líneas) |
+| `mvn test` | `backend/` | Ejecuta las 140 pruebas unitarias y genera el reporte de cobertura en `target/site/jacoco/index.html` (70,4 % de líneas) |
 | `npm install` y `npm run dev` | `frontend/` | Servidor de desarrollo con recarga en http://localhost:5173 |
 | `npm run build` | `frontend/` | Chequea tipos y compila |
 | `npm run lint` | `frontend/` | Revisa el código con ESLint |
