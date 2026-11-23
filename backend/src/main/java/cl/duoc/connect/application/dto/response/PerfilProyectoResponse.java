@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Getter
-@Builder
+@Builder(toBuilder = true)
 @AllArgsConstructor
 public class PerfilProyectoResponse {
 
@@ -27,6 +27,10 @@ public class PerfilProyectoResponse {
     private final List<AsignaturaItem> asignaturas;
     private final List<HabilidadItem> habilidades;
     private final List<DisponibilidadItem> disponibilidades;
+    /** Solo al ver el perfil de otro estudiante: compatibilidad con quien consulta (0-100). */
+    private final Integer matchScore;
+    /** Solo al ver el perfil de otro estudiante: asignaturas que ambos cursan. */
+    private final Integer asignaturasEnComun;
 
     @Getter
     @Builder

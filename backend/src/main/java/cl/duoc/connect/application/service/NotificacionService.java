@@ -120,6 +120,31 @@ public class NotificacionService {
         notificacionRepository.save(notificacion);
     }
 
+    @Transactional
+    public void notificarInvitacionDirecta(UsuarioEntity destinatario, String grupoNombre, String invitadorNombre) {
+        NotificacionEntity notificacion = new NotificacionEntity();
+        notificacion.setUsuario(destinatario);
+        notificacion.setTipo(TipoNotificacion.INVITACION_DIRECTA);
+        notificacion.setTitulo("Te invitaron a " + grupoNombre);
+        notificacion.setMensaje(invitadorNombre + " vio tu perfil de compañero y te invitó a su grupo. Acepta o rechaza la invitación.");
+        notificacion.setEnlace("/invitaciones");
+        notificacionRepository.save(notificacion);
+    }
+
+    @Transactional
+    public void notificarRespuestaInvitacion(UsuarioEntity destinatario, String invitadoNombre, String grupoNombre,
+                                             boolean aceptada, UUID grupoId) {
+        NotificacionEntity notificacion = new NotificacionEntity();
+        notificacion.setUsuario(destinatario);
+        notificacion.setTipo(TipoNotificacion.RESPUESTA_INVITACION);
+        notificacion.setTitulo(aceptada ? invitadoNombre + " se unió a " + grupoNombre
+                : invitadoNombre + " no aceptó tu invitación");
+        notificacion.setMensaje(aceptada ? "Aceptó tu invitación y ya es integrante del grupo."
+                : "Rechazó la invitación a " + grupoNombre + ".");
+        notificacion.setEnlace("/grupos/" + grupoId);
+        notificacionRepository.save(notificacion);
+    }
+
     private NotificacionResponse toResponse(NotificacionEntity entity) {
         return NotificacionResponse.builder()
                 .id(entity.getId())

@@ -1,6 +1,8 @@
 import type { CompaneroRecomendacion } from '@/features/companions/types/companion.types';
 import { Avatar } from '@/shared/components/ui/Avatar';
 import { Badge } from '@/shared/components/ui/Badge';
+import { IconArrowRight } from '@/shared/components/ui/Icons';
+import { Link } from 'react-router-dom';
 
 const NIVEL_LABEL = { BASICO: 'Básico', INTERMEDIO: 'Intermedio', AVANZADO: 'Avanzado' } as const;
 
@@ -22,11 +24,19 @@ function ScoreRing({ score }: { score: number }) {
 
 export function CompanionCard({ companero }: { companero: CompaneroRecomendacion }) {
   return (
-    <article className="card card-hover flex flex-col p-5">
+    <article className="card card-hover relative flex flex-col p-5 focus-within:ring-4 focus-within:ring-duoc-yellow/40">
       <div className="flex items-start gap-4">
         <Avatar nombre={companero.nombre} fotoUrl={companero.fotoUrl} size="lg" />
         <div className="min-w-0 flex-1">
-          <h3 className="truncate font-semibold text-gray-950">{companero.nombre}</h3>
+          <h3 className="truncate font-semibold text-gray-950">
+            {/* El enlace cubre toda la tarjeta (::after) para que sea clicable completa. */}
+            <Link
+              to={`/companeros/${companero.usuarioId}`}
+              className="after:absolute after:inset-0 after:rounded-[inherit] after:content-[''] hover:underline focus:outline-none"
+            >
+              {companero.nombre}
+            </Link>
+          </h3>
           <p className="text-sm text-gray-500">{companero.carreraNombre}</p>
           <p className="text-xs text-gray-400">
             {companero.sedeNombre} · Semestre {companero.semestre}
@@ -49,6 +59,10 @@ export function CompanionCard({ companero }: { companero: CompaneroRecomendacion
           </Badge>
         ))}
       </div>
+
+      <span className="mt-auto flex items-center gap-1 pt-4 text-sm font-semibold text-gray-900" aria-hidden="true">
+        Ver perfil <IconArrowRight className="h-4 w-4" />
+      </span>
     </article>
   );
 }

@@ -60,6 +60,31 @@ public class CompaneroService {
         return buildPerfilResponse(usuario, perfil);
     }
 
+    /**
+     * Perfil de compañero de otro estudiante (HU-13/HU-14). Solo se muestra si el
+     * estudiante está activo, busca compañero y su visibilidad lo permite; en otro
+     * caso se responde como no encontrado para no revelar perfiles ocultos.
+     */
+    @Transactional(readOnly = true)
+    public PerfilProyectoResponse obtenerPerfilDeCompanero(UUID usuarioId) {
+        UsuarioEntity current = getCurrentUsuario();
+        if (current.getId().equals(usuarioId)) {
+            return obtenerMiPerfil();
+        }
+
+        PerfilProyectoEntity perfil = buscarPerfilVisible(usuarioId, current);
+
+        UsuarioEntity usuario = perfil.getUsuario();
+        MatchingProfile currentProfile = buildMatchingProfile(current.getId(), current.getCarrera().getId());
+        MatchingProfile candidateProfile = buildMatchingProfile(usuario.getId(), usuario.getCarrera().getId());
+
+        PerfilProyectoResponse base = buildPerfilResponse(usuario, perfil);
+        return base.toBuilder()
+                .matchScore(matchingService.calcularScore(currentProfile, candidateProfile))
+                .asignaturasEnComun(matchingService.contarAsignaturasEnComun(currentProfile, candidateProfile))
+                .build();
+    }
+
     @Transactional
     public PerfilProyectoResponse actualizarMiPerfil(UpdatePerfilProyectoRequest request) {
         UsuarioEntity usuario = getCurrentUsuario();
@@ -107,6 +132,23 @@ public class CompaneroService {
                 .sorted(Comparator.comparingInt(CompaneroRecomendacionResponse::getMatchScore).reversed())
                 .limit(limit)
                 .toList();
+    }
+
+    /**
+     * Estudiante cuyo perfil de compañero puede ver quien consulta (mismas reglas que
+     * {@link #obtenerPerfilDeCompanero(UUID)}). Se usa para invitarlo a un grupo sin exponer su correo.
+     */
+    @Transactional(readOnly = true)
+    public UsuarioEntity obtenerCompaneroVisible(UUID usuarioId) {
+        return buscarPerfilVisible(usuarioId, getCurrentUsuario()).getUsuario();
+    }
+
+    private PerfilProyectoEntity buscarPerfilVisible(UUID usuarioId, UsuarioEntity current) {
+        return perfilRepository.findByUsuarioIdWithUsuario(usuarioId)
+                .filter(p -> Boolean.TRUE.equals(p.getBuscandoCompanero()))
+                .filter(p -> !Boolean.FALSE.equals(p.getUsuario().getActivo()))
+                .filter(p -> esVisibleParaUsuario(p, current.getCarrera().getId()))
+                .orElseThrow(() -> new EntityNotFoundException("Perfil de compañero no disponible"));
     }
 
     private boolean esVisibleParaUsuario(PerfilProyectoEntity perfil, UUID carreraActualId) {

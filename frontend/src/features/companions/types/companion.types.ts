@@ -31,6 +31,9 @@ export interface PerfilProyecto {
   asignaturas: AsignaturaPerfilItem[];
   habilidades: HabilidadPerfilItem[];
   disponibilidades: DisponibilidadItem[];
+  /** Solo al ver el perfil de otro estudiante. */
+  matchScore?: number | null;
+  asignaturasEnComun?: number | null;
 }
 
 export interface CompaneroRecomendacion {

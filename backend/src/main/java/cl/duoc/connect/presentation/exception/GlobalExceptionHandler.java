@@ -42,7 +42,7 @@ public class GlobalExceptionHandler {
             case "CARRERA_NOT_FOUND", "SEDE_NOT_FOUND", "USER_NOT_FOUND", "ASIGNATURA_NOT_FOUND",
                     "HABILIDAD_NOT_FOUND" ->
                     HttpStatus.NOT_FOUND;
-            case "ALREADY_MEMBER", "GROUP_FULL" -> HttpStatus.CONFLICT;
+            case "ALREADY_MEMBER", "GROUP_FULL", "INVITACION_PENDIENTE", "INVITACION_RESPONDIDA" -> HttpStatus.CONFLICT;
             default -> HttpStatus.BAD_REQUEST;
         };
 

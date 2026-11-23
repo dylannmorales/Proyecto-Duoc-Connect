@@ -14,6 +14,7 @@ Plataforma web para estudiantes de Duoc UC: grupos de estudio con chat en tiempo
 | — | Historias adicionales: compartir apuntes por vínculo (HU-18), editar grupo (HU-19), invitar al grupo por correo (HU-20) | Incluido |
 | 8 | Panel de administración completo y moderación de contenido (HU-16, HU-17) | Incluido |
 | 8 | Perfil de compañero y recomendación por compatibilidad (HU-13, HU-14) | Incluido |
+| — | Historias adicionales: ver el perfil de un compañero (HU-21) e invitarlo a un grupo sin conocer su correo (HU-22) | Incluido |
 | — | Mejoras: invitar por correo al crear o editar un grupo, compartir apuntes por correo, quien crea un grupo puede editarlo, selector con búsqueda, botón «Volver» con migas de pan y formularios rediseñados | Incluido |
 
 ### Historias de usuario adicionales
@@ -25,15 +26,17 @@ Surgieron después del backlog de Fase 1 (que llega hasta HU-17) y continúan su
 | HU-18 | Estudiante | Compartir un apunte mediante un vínculo que aparece en un modal | Desde la tarjeta o el detalle del apunte, "Compartir" abre un modal con el vínculo `/apuntes/{id}`, el botón "Copiar vínculo" y la opción de enviarlo por Gmail. Quien abre el vínculo con sesión iniciada ve el apunte y puede descargarlo y valorarlo; sin sesión se le pide iniciarla y luego vuelve al apunte. |
 | HU-19 | Creador o administrador del grupo | Editar el grupo de estudio | Quien creó el grupo (mientras siga siendo integrante) y el administrador del grupo ven "Editar" y puede cambiar nombre, descripción, carrera, asignatura, cupo y privacidad. El cupo no puede quedar bajo la cantidad de integrantes actuales y la asignatura debe ser de la carrera elegida. Un miembro sin esos permisos recibe 403. |
 | HU-20 | Miembro del grupo | Compartir el grupo mediante una invitación por correo | "Compartir" abre un modal donde se agregan correos `@duocuc.cl`, se ven las personas con acceso (nombre, correo y rol) y "Copiar vínculo". Cada invitado recibe un correo con el vínculo `/grupos/unirse/{código}`; si ya tiene cuenta, también una notificación. Los correos no institucionales se rechazan y los que ya son miembros se omiten, informando el resultado de cada uno. |
+| HU-21 | Estudiante | Ver el perfil de un compañero desde "Buscar compañeros" | Al hacer clic en una tarjeta de recomendación o de resultado se abre `/companeros/{id}` con bio, carrera, sede, semestre, asignaturas, habilidades, horarios y la compatibilidad conmigo. Solo se muestra si la persona busca compañero y su visibilidad lo permite; si no, aparece "Perfil no disponible". |
+| HU-22 | Estudiante | Invitar a un compañero a mi grupo sin conocer su correo | En su perfil, "Invitar a mi grupo" permite elegir uno de mis grupos y escribir un mensaje opcional. La persona recibe una notificación y en `/invitaciones` acepta (entra al grupo, aunque sea privado, si hay cupo) o rechaza; quien invitó recibe la respuesta. No se puede invitar dos veces al mismo grupo, a quien ya es integrante ni a un grupo lleno, y el correo nunca se muestra. |
 
 ## Pruebas e integración continua
 
 Cada push y cada pull request ejecutan automáticamente (GitHub Actions, `.github/workflows/ci.yml`):
 
-- **Backend:** las 111 pruebas unitarias con JUnit 5 y Mockito, más el reporte de cobertura JaCoCo (67,7 % de líneas). El resumen aparece en la pestaña *Actions* y el reporte completo se descarga como artefacto.
+- **Backend:** las 128 pruebas unitarias con JUnit 5 y Mockito, más el reporte de cobertura JaCoCo (68,7 % de líneas). El resumen aparece en la pestaña *Actions* y el reporte completo se descarga como artefacto.
 - **Frontend:** lint, chequeo de tipos y build.
 
-Las pruebas cubren registro, inicio de sesión y recuperación de contraseña, perfil, grupos, chat, notificaciones, apuntes, foro, compañeros y su cálculo de compatibilidad, el panel de administración, la seguridad JWT, el manejo de errores y el almacenamiento de archivos. Además de las pruebas unitarias, el informe QA v2.1 documenta 94 pruebas de API, 38 pruebas E2E con Playwright y 8 pruebas de integridad de la base de datos: 268 casos en total, todos aprobados.
+Las pruebas cubren registro, inicio de sesión y recuperación de contraseña, perfil, grupos, chat, notificaciones, apuntes, foro, compañeros y su cálculo de compatibilidad, las invitaciones directas a grupos, el panel de administración, la seguridad JWT, el manejo de errores y el almacenamiento de archivos. Además de las pruebas unitarias, el informe QA v2.1 documenta 94 pruebas de API, 38 pruebas E2E con Playwright y 8 pruebas de integridad de la base de datos: 268 casos en total, todos aprobados.
 
 ## Modelo de datos
 
@@ -147,6 +150,8 @@ Abre http://localhost:5173.
 | `/foro` | Autenticado | Listar y filtrar preguntas, hacer una pregunta |
 | `/foro/:id` | Autenticado | Detalle: responder, votar y aceptar solución |
 | `/companeros` | Autenticado | Perfil de compañero (habilidades, asignaturas y horarios) y compañeros recomendados por compatibilidad |
+| `/companeros/:usuarioId` | Autenticado | Perfil de un compañero con su compatibilidad y el botón «Invitar a mi grupo» (sin necesitar su correo) |
+| `/invitaciones` | Autenticado | Invitaciones a grupos recibidas desde el perfil de compañero: aceptar (entra al grupo) o rechazar |
 | `/admin` | Administrador | Resumen, usuarios y roles, y moderación de apuntes, preguntas, respuestas, grupos, mensajes, fotos y perfiles de compañero (ver, editar, eliminar) |
 
 La campana de notificaciones aparece en la barra superior cuando hay sesión iniciada.
@@ -186,6 +191,11 @@ Base: `/api/v1`
 | POST | `/apuntes/{id}/compartir` | Compartir por correo: `{ "emails": [...], "mensaje": "..." }` (solo `@duocuc.cl`; notifica a quien ya tiene cuenta) |
 | GET / PUT | `/companeros/perfil` | Mi perfil de compañero: bio, visibilidad, asignaturas, habilidades y horarios |
 | GET | `/companeros/recomendaciones`, `/companeros/buscar?asignaturaId=&habilidadId=` | Compañeros ordenados por compatibilidad (carrera 25, asignaturas 30, horario 25, habilidades complementarias 20) |
+| GET | `/companeros/{usuarioId}/perfil` | Perfil de compañero de otro estudiante (respeta su visibilidad) |
+| GET | `/companeros/{usuarioId}/grupos-invitables` | Mis grupos, indicando a cuáles puedo invitar a ese compañero |
+| POST | `/companeros/{usuarioId}/invitaciones` | Invitar a un compañero a uno de mis grupos: `{ "grupoId": "...", "mensaje": "..." }`. Le llega una notificación; no se usa ni se muestra su correo |
+| GET | `/invitaciones` | Invitaciones pendientes que recibí |
+| POST | `/invitaciones/{id}/aceptar`, `/invitaciones/{id}/rechazar` | Responder: aceptar une al grupo (aunque sea privado, si hay cupo); en ambos casos se avisa a quien invitó |
 | GET | `/foro/preguntas` | Listar con filtros: `carreraId`, `asignaturaId`, `q`, `estado` (`TODAS`, `ABIERTAS`, `RESUELTAS`), `orden` (`recientes`, `votos`) |
 | POST | `/foro/preguntas` | Publicar pregunta (multipart: `titulo`, `contenido`, `carreraId`, `asignaturaId` o `tematicaGeneral=true`, `imagen` opcional JPG/PNG/WebP de hasta 2 MB) |
 | GET | `/foro/preguntas/{id}` | Detalle con respuestas |
@@ -298,8 +308,8 @@ Levanta PostgreSQL, el backend (puerto 8080) y el frontend servido por nginx (pu
 duoc-connect/
 ├── .github/workflows/   # CI: pruebas, lint y build en cada push y PR
 ├── backend/            # API REST Spring Boot
-│   ├── src/main/resources/db/migration/  # Flyway V1 a V7
-│   ├── src/test/java/   # 111 pruebas unitarias (JUnit 5 + Mockito)
+│   ├── src/main/resources/db/migration/  # Flyway V1 a V8
+│   ├── src/test/java/   # 128 pruebas unitarias (JUnit 5 + Mockito)
 │   └── src/main/java/cl/duoc/connect/
 │       ├── presentation/    # controladores, configuración, manejo de errores
 │       ├── application/     # servicios, DTOs, mappers, puertos
@@ -321,7 +331,7 @@ duoc-connect/
 | Comando | Dónde | Qué hace |
 |---------|-------|----------|
 | `mvn spring-boot:run` | `backend/` | Inicia la API |
-| `mvn test` | `backend/` | Ejecuta las 111 pruebas unitarias y genera el reporte de cobertura en `target/site/jacoco/index.html` (67,7 % de líneas) |
+| `mvn test` | `backend/` | Ejecuta las 128 pruebas unitarias y genera el reporte de cobertura en `target/site/jacoco/index.html` (68,7 % de líneas) |
 | `mvn -DskipTests package` | `backend/` | Genera el JAR |
 | `npm run dev` | `frontend/` | Servidor de desarrollo |
 | `npm run build` | `frontend/` | Chequea tipos y compila |
