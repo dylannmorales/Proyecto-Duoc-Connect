@@ -13,6 +13,7 @@ import { GroupDetailPage } from '@/features/groups/pages/GroupDetailPage';
 import { GroupsPage } from '@/features/groups/pages/GroupsPage';
 import { JoinByLinkPage } from '@/features/groups/pages/JoinByLinkPage';
 import { HomePage } from '@/features/home/pages/HomePage';
+import { InvitationsPage } from '@/features/invitations/pages/InvitationsPage';
 import { NoteDetailPage } from '@/features/notes/pages/NoteDetailPage';
 import { NotesPage } from '@/features/notes/pages/NotesPage';
 import { ProfilePage } from '@/features/profile/pages/ProfilePage';
@@ -126,6 +127,14 @@ export function AppRoutes() {
             element={
               <ProtectedRoute>
                 <CompanionProfilePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="invitaciones"
+            element={
+              <ProtectedRoute>
+                <InvitationsPage />
               </ProtectedRoute>
             }
           />

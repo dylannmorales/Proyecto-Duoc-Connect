@@ -147,6 +147,8 @@ Abre http://localhost:5173.
 | `/foro` | Autenticado | Listar y filtrar preguntas, hacer una pregunta |
 | `/foro/:id` | Autenticado | Detalle: responder, votar y aceptar solución |
 | `/companeros` | Autenticado | Perfil de compañero (habilidades, asignaturas y horarios) y compañeros recomendados por compatibilidad |
+| `/companeros/:usuarioId` | Autenticado | Perfil de un compañero con su compatibilidad y el botón «Invitar a mi grupo» (sin necesitar su correo) |
+| `/invitaciones` | Autenticado | Invitaciones a grupos recibidas desde el perfil de compañero: aceptar (entra al grupo) o rechazar |
 | `/admin` | Administrador | Resumen, usuarios y roles, y moderación de apuntes, preguntas, respuestas, grupos, mensajes, fotos y perfiles de compañero (ver, editar, eliminar) |
 
 La campana de notificaciones aparece en la barra superior cuando hay sesión iniciada.
@@ -186,6 +188,11 @@ Base: `/api/v1`
 | POST | `/apuntes/{id}/compartir` | Compartir por correo: `{ "emails": [...], "mensaje": "..." }` (solo `@duocuc.cl`; notifica a quien ya tiene cuenta) |
 | GET / PUT | `/companeros/perfil` | Mi perfil de compañero: bio, visibilidad, asignaturas, habilidades y horarios |
 | GET | `/companeros/recomendaciones`, `/companeros/buscar?asignaturaId=&habilidadId=` | Compañeros ordenados por compatibilidad (carrera 25, asignaturas 30, horario 25, habilidades complementarias 20) |
+| GET | `/companeros/{usuarioId}/perfil` | Perfil de compañero de otro estudiante (respeta su visibilidad) |
+| GET | `/companeros/{usuarioId}/grupos-invitables` | Mis grupos, indicando a cuáles puedo invitar a ese compañero |
+| POST | `/companeros/{usuarioId}/invitaciones` | Invitar a un compañero a uno de mis grupos: `{ "grupoId": "...", "mensaje": "..." }`. Le llega una notificación; no se usa ni se muestra su correo |
+| GET | `/invitaciones` | Invitaciones pendientes que recibí |
+| POST | `/invitaciones/{id}/aceptar`, `/invitaciones/{id}/rechazar` | Responder: aceptar une al grupo (aunque sea privado, si hay cupo); en ambos casos se avisa a quien invitó |
 | GET | `/foro/preguntas` | Listar con filtros: `carreraId`, `asignaturaId`, `q`, `estado` (`TODAS`, `ABIERTAS`, `RESUELTAS`), `orden` (`recientes`, `votos`) |
 | POST | `/foro/preguntas` | Publicar pregunta (multipart: `titulo`, `contenido`, `carreraId`, `asignaturaId` o `tematicaGeneral=true`, `imagen` opcional JPG/PNG/WebP de hasta 2 MB) |
 | GET | `/foro/preguntas/{id}` | Detalle con respuestas |

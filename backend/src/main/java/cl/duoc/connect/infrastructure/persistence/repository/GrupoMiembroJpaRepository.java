@@ -33,4 +33,12 @@ public interface GrupoMiembroJpaRepository extends JpaRepository<GrupoMiembroEnt
             ORDER BY gm.joinedAt ASC
             """)
     List<GrupoMiembroEntity> findMiembrosOrdenados(@Param("grupoId") UUID grupoId);
+
+    @Query("""
+            SELECT gm FROM GrupoMiembroEntity gm
+            JOIN FETCH gm.grupo g
+            WHERE gm.usuario.id = :usuarioId
+            ORDER BY g.nombre ASC
+            """)
+    List<GrupoMiembroEntity> findByUsuarioIdWithGrupo(@Param("usuarioId") UUID usuarioId);
 }

@@ -72,11 +72,7 @@ public class CompaneroService {
             return obtenerMiPerfil();
         }
 
-        PerfilProyectoEntity perfil = perfilRepository.findByUsuarioIdWithUsuario(usuarioId)
-                .filter(p -> Boolean.TRUE.equals(p.getBuscandoCompanero()))
-                .filter(p -> !Boolean.FALSE.equals(p.getUsuario().getActivo()))
-                .filter(p -> esVisibleParaUsuario(p, current.getCarrera().getId()))
-                .orElseThrow(() -> new EntityNotFoundException("Perfil de compañero no disponible"));
+        PerfilProyectoEntity perfil = buscarPerfilVisible(usuarioId, current);
 
         UsuarioEntity usuario = perfil.getUsuario();
         MatchingProfile currentProfile = buildMatchingProfile(current.getId(), current.getCarrera().getId());
@@ -136,6 +132,23 @@ public class CompaneroService {
                 .sorted(Comparator.comparingInt(CompaneroRecomendacionResponse::getMatchScore).reversed())
                 .limit(limit)
                 .toList();
+    }
+
+    /**
+     * Estudiante cuyo perfil de compañero puede ver quien consulta (mismas reglas que
+     * {@link #obtenerPerfilDeCompanero(UUID)}). Se usa para invitarlo a un grupo sin exponer su correo.
+     */
+    @Transactional(readOnly = true)
+    public UsuarioEntity obtenerCompaneroVisible(UUID usuarioId) {
+        return buscarPerfilVisible(usuarioId, getCurrentUsuario()).getUsuario();
+    }
+
+    private PerfilProyectoEntity buscarPerfilVisible(UUID usuarioId, UsuarioEntity current) {
+        return perfilRepository.findByUsuarioIdWithUsuario(usuarioId)
+                .filter(p -> Boolean.TRUE.equals(p.getBuscandoCompanero()))
+                .filter(p -> !Boolean.FALSE.equals(p.getUsuario().getActivo()))
+                .filter(p -> esVisibleParaUsuario(p, current.getCarrera().getId()))
+                .orElseThrow(() -> new EntityNotFoundException("Perfil de compañero no disponible"));
     }
 
     private boolean esVisibleParaUsuario(PerfilProyectoEntity perfil, UUID carreraActualId) {

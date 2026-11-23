@@ -1,15 +1,16 @@
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Navigate, useParams } from 'react-router-dom';
 import { useAuth } from '@/features/auth/hooks/useAuth';
+import { InviteToGroupModal } from '@/features/companions/components/InviteToGroupModal';
 import { getCompanionProfile } from '@/features/companions/services/companionsService';
 import type { DisponibilidadItem } from '@/features/companions/types/companion.types';
 import { DIAS_SEMANA, NIVELES_HABILIDAD } from '@/features/companions/utils/constants';
 import { Avatar } from '@/shared/components/ui/Avatar';
 import { BackButton, BackNav } from '@/shared/components/ui/BackNav';
 import { Badge } from '@/shared/components/ui/Badge';
-import { Spinner } from '@/shared/components/ui/FormControls';
-import { IconCalendar, IconGraduation, IconMapPin } from '@/shared/components/ui/Icons';
+import { Button, FormAlert, Spinner } from '@/shared/components/ui/FormControls';
+import { IconCalendar, IconGraduation, IconMapPin, IconUsers } from '@/shared/components/ui/Icons';
 import { getApiErrorMessage } from '@/shared/utils/errors';
 
 const NIVEL_LABEL = Object.fromEntries(NIVELES_HABILIDAD.map((n) => [n.value, n.label])) as Record<string, string>;
@@ -44,6 +45,8 @@ function Vacio({ children }: { children: ReactNode }) {
 export function CompanionProfilePage() {
   const { usuarioId } = useParams<{ usuarioId: string }>();
   const { user } = useAuth();
+  const [inviteOpen, setInviteOpen] = useState(false);
+  const [aviso, setAviso] = useState('');
 
   const perfilQuery = useQuery({
     queryKey: ['perfil-companero', usuarioId],
@@ -115,7 +118,27 @@ export function CompanionProfilePage() {
             {perfil.buscandoCompanero && <Badge tone="yellow">Buscando compañero</Badge>}
           </div>
         </div>
+        <div className="sm:self-start">
+          <Button icon={<IconUsers className="h-4 w-4" />} onClick={() => setInviteOpen(true)}>
+            Invitar a mi grupo
+          </Button>
+        </div>
       </header>
+
+      {aviso && <FormAlert type="success" message={aviso} />}
+
+      <InviteToGroupModal
+        open={inviteOpen}
+        usuarioId={perfil.usuarioId}
+        nombre={perfil.nombre}
+        onClose={() => setInviteOpen(false)}
+        onSent={(grupoNombre) => {
+          setInviteOpen(false);
+          setAviso(
+            `Invitación enviada a ${perfil.nombre} para unirse a ${grupoNombre}. Te avisaremos cuando responda.`,
+          );
+        }}
+      />
 
       <Section title="Sobre mí">
         {perfil.bio ? (
