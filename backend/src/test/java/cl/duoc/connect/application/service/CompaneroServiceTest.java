@@ -6,6 +6,7 @@ import cl.duoc.connect.application.dto.response.PerfilProyectoResponse;
 import cl.duoc.connect.domain.enums.NivelHabilidad;
 import cl.duoc.connect.domain.enums.VisibilidadPerfil;
 import cl.duoc.connect.domain.exception.BusinessException;
+import cl.duoc.connect.domain.exception.EntityNotFoundException;
 import cl.duoc.connect.domain.service.MatchingService;
 import cl.duoc.connect.infrastructure.persistence.entity.AsignaturaEntity;
 import cl.duoc.connect.infrastructure.persistence.entity.CarreraEntity;
@@ -228,6 +229,64 @@ class CompaneroServiceTest {
             assertThat(companeroService.buscarCompaneros(bd.getId(), java.getId(), 10)).hasSize(1);
             assertThat(companeroService.buscarCompaneros(null, UUID.randomUUID(), 10)).isEmpty();
             assertThat(companeroService.buscarCompaneros(null, null, 1)).hasSize(1);
+        }
+    }
+
+    @Nested
+    @DisplayName("HU-14: ver el perfil de un compañero")
+    class PerfilDeCompanero {
+
+        @Test
+        @DisplayName("Muestra el perfil completo con la compatibilidad")
+        void visible() {
+            UsuarioEntity otro = TestData.usuario("Valentina Soto", informatica);
+            asignaturas(yo, bd);
+            asignaturas(otro, bd);
+            PerfilProyectoEntity p = perfil(otro, VisibilidadPerfil.SOLO_CARRERA);
+            p.setBio("Me gusta el backend");
+            when(perfilRepository.findByUsuarioIdWithUsuario(otro.getId())).thenReturn(Optional.of(p));
+
+            PerfilProyectoResponse r = companeroService.obtenerPerfilDeCompanero(otro.getId());
+
+            assertThat(r.getNombre()).isEqualTo("Valentina Soto");
+            assertThat(r.getBio()).isEqualTo("Me gusta el backend");
+            assertThat(r.getAsignaturas()).extracting(PerfilProyectoResponse.AsignaturaItem::getNombre)
+                    .containsExactly("Bases de Datos");
+            assertThat(r.getAsignaturasEnComun()).isEqualTo(1);
+            assertThat(r.getMatchScore()).isNotNull().isBetween(0, 100);
+        }
+
+        @Test
+        @DisplayName("Oculta perfiles de otra carrera no públicos, que no buscan compañero o inexistentes")
+        void oculto() {
+            CarreraEntity otraCarrera = TestData.carrera("Diseño Gráfico");
+            UsuarioEntity privado = TestData.usuario("Benjamín Muñoz", otraCarrera);
+            when(perfilRepository.findByUsuarioIdWithUsuario(privado.getId()))
+                    .thenReturn(Optional.of(perfil(privado, VisibilidadPerfil.SOLO_CARRERA)));
+
+            UsuarioEntity inactivoBusqueda = TestData.usuario("Matías González", informatica);
+            PerfilProyectoEntity noBusca = perfil(inactivoBusqueda, VisibilidadPerfil.PUBLICO);
+            noBusca.setBuscandoCompanero(false);
+            when(perfilRepository.findByUsuarioIdWithUsuario(inactivoBusqueda.getId())).thenReturn(Optional.of(noBusca));
+
+            UUID inexistente = UUID.randomUUID();
+            when(perfilRepository.findByUsuarioIdWithUsuario(inexistente)).thenReturn(Optional.empty());
+
+            for (UUID id : List.of(privado.getId(), inactivoBusqueda.getId(), inexistente)) {
+                assertThatThrownBy(() -> companeroService.obtenerPerfilDeCompanero(id))
+                        .isInstanceOf(EntityNotFoundException.class);
+            }
+        }
+
+        @Test
+        @DisplayName("Un perfil de otra carrera marcado como público sí se puede ver")
+        void publicoOtraCarrera() {
+            UsuarioEntity publico = TestData.usuario("Sofía Fernández", TestData.carrera("Diseño Gráfico"));
+            when(perfilRepository.findByUsuarioIdWithUsuario(publico.getId()))
+                    .thenReturn(Optional.of(perfil(publico, VisibilidadPerfil.PUBLICO)));
+
+            assertThat(companeroService.obtenerPerfilDeCompanero(publico.getId()).getNombre())
+                    .isEqualTo("Sofía Fernández");
         }
     }
 

@@ -11,6 +11,11 @@ export async function getProjectProfile() {
   return data.data;
 }
 
+export async function getCompanionProfile(usuarioId: string) {
+  const { data } = await apiClient.get<ApiResponse<PerfilProyecto>>(`/companeros/${usuarioId}/perfil`);
+  return data.data;
+}
+
 export async function updateProjectProfile(payload: UpdatePerfilProyectoPayload) {
   const { data } = await apiClient.put<ApiResponse<PerfilProyecto>>('/companeros/perfil', payload);
   return data.data;
