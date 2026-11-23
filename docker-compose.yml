@@ -8,7 +8,8 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-duoc}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-duoc_secret}
     ports:
-      - "5432:5432"
+      # POSTGRES_PORT permite usar otro puerto si ya hay un PostgreSQL instalado en el equipo.
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -26,6 +27,14 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    # Variables del .env (versionado) y de .env.local (opcional, no versionado: claves reales de AWS).
+    # .env.local pisa a .env. Así llegan AWS_S3_ENABLED, AWS_S3_BUCKET, AWS_REGION y las claves.
+    env_file:
+      - path: .env
+        required: false
+      - path: .env.local
+        required: false
+    # Lo de "environment" tiene prioridad sobre env_file (dentro de Docker la BD es el servicio "postgres").
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-duoc_connect}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-duoc}
@@ -52,4 +61,6 @@ services:
 
 volumes:
   postgres_data:
+    # POSTGRES_VOLUME permite reutilizar un volumen existente con datos.
+    name: ${POSTGRES_VOLUME:-proyecto-duoc-connect_postgres_data}
   uploads_data:

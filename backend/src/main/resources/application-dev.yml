@@ -5,6 +5,11 @@ logging:
     org.hibernate.SQL: DEBUG
 
 spring:
+  # En desarrollo se lee el .env de la raíz del repo (con mvn se ejecuta desde backend/, por eso ../.env)
+  # y después .env.local (no versionado, para claves reales), que pisa lo anterior.
+  # Las variables de entorno siguen teniendo prioridad sobre ambos archivos.
+  config:
+    import: "optional:file:.env[.properties],optional:file:../.env[.properties],optional:file:.env.local[.properties],optional:file:../.env.local[.properties]"
   jpa:
     show-sql: true
 

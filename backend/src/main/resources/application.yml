@@ -49,6 +49,17 @@ app:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
   upload:
     path: ${UPLOAD_PATH:./uploads}
+  # Los PDF de apuntes se guardan en S3 cuando AWS_S3_ENABLED=true; si no, en app.upload.path.
+  # Credenciales: AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY (variables o .env); si faltan,
+  # se usa la cadena estándar de AWS (~/.aws/credentials, rol de la instancia, etc.).
+  storage:
+    s3:
+      enabled: ${AWS_S3_ENABLED:false}
+      bucket: ${AWS_S3_BUCKET:duoc-connect}
+      region: ${AWS_REGION:us-east-2}
+      prefix: ${AWS_S3_PREFIX:apuntes/}
+      access-key: ${AWS_ACCESS_KEY_ID:}
+      secret-key: ${AWS_SECRET_ACCESS_KEY:}
   frontend-url: ${FRONTEND_URL:http://localhost:5173}
   # Administrador inicial. Si no se define ADMIN_PASSWORD no se crea (salvo en dev, ver application-dev.yml).
   admin:

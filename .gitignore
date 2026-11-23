@@ -24,7 +24,7 @@ frontend/.env.local
 uploads/
 *.log
 
-# Docker
-.env
+# Docker (el .env de la raíz se versiona; las claves reales van en .env.local)
+.env.local
 
 *.zip

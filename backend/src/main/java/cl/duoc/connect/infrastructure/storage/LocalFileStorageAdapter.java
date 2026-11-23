@@ -146,7 +146,8 @@ public class LocalFileStorageAdapter implements FileStoragePort {
         }
     }
 
-    private void validatePdf(MultipartFile file) {
+    /** Visible en el paquete para que {@link S3FileStorageAdapter} aplique las mismas reglas. */
+    void validatePdf(MultipartFile file) {
         if (file == null || file.isEmpty()) {
             throw new BusinessException("FILE_EMPTY", "El archivo está vacío");
         }
