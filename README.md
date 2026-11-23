@@ -53,67 +53,62 @@ El diagrama entidad-relación, el detalle de las tablas y la justificación de l
 
 ## Requisitos
 
-| Herramienta | Versión | Para qué |
-|-------------|---------|----------|
-| JDK | 17 o superior | Backend |
-| Maven | 3.9+ | Backend (no hay wrapper completo en el repo) |
-| Node.js | 20+ | Frontend |
-| Docker Desktop | reciente | PostgreSQL (recomendado) |
+Solo necesitas **[Docker Desktop](https://www.docker.com/products/docker-desktop/)** (y Git para clonar el repo).
 
-Verifica las versiones:
+No hace falta instalar Java, Maven, Node.js ni PostgreSQL: el backend y el frontend se compilan dentro de sus contenedores y la base de datos corre en otro contenedor.
 
-```bash
-java -version
-mvn -v
-node -v
-docker --version
-```
-
-### Configurar Maven en el PATH
-
-Si `mvn -v` responde *"mvn no se reconoce como un comando"* (o `command not found`), Maven no está instalado o su carpeta `bin` no está en el `PATH`. Maven además necesita que `JAVA_HOME` apunte al JDK.
-
-#### Windows
-
-1. Descarga el archivo **Binary zip** (`apache-maven-3.9.x-bin.zip`) desde <https://maven.apache.org/download.cgi>.
-2. Descomprímelo en una carpeta sin espacios, por ejemplo `C:\tools\apache-maven-3.9.9`.
-3. Define las variables de entorno de usuario. Desde PowerShell (ajusta las rutas a las de tu equipo):
-
-   ```powershell
-   [Environment]::SetEnvironmentVariable("JAVA_HOME", "C:\Program Files\Java\jdk-17", "User")
-   [Environment]::SetEnvironmentVariable("MAVEN_HOME", "C:\tools\apache-maven-3.9.9", "User")
-   $userPath = [Environment]::GetEnvironmentVariable("Path", "User")
-   [Environment]::SetEnvironmentVariable("Path", "$userPath;C:\tools\apache-maven-3.9.9\bin;C:\Program Files\Java\jdk-17\bin", "User")
-   ```
-
-   > ⚠️ Las rutas son de ejemplo. `JAVA_HOME` debe apuntar a una carpeta de JDK **que exista** en tu equipo (la que contiene `bin\java.exe`), si no Maven muestra *"The JAVA_HOME environment variable is not defined correctly"*. Compruébalo con `Test-Path "$env:JAVA_HOME\bin\java.exe"`. Si no tienes JDK, instálalo con `winget install EclipseAdoptium.Temurin.17.JDK` (queda en `C:\Program Files\Eclipse Adoptium\jdk-17...`).
-
-   O por interfaz gráfica: **Inicio → "Editar las variables de entorno del sistema" → Variables de entorno**. En *Variables de usuario* crea `JAVA_HOME` y `MAVEN_HOME`, y edita `Path` agregando `%MAVEN_HOME%\bin` y `%JAVA_HOME%\bin`.
-4. **Cierra y vuelve a abrir la terminal** (y VS Code / IntelliJ si los tenías abiertos) para que tome los cambios.
-5. Verifica con `mvn -v`: debe mostrar la versión de Maven y la del JDK 17+.
-
-> Alternativa rápida: `winget install Apache.Maven` o `choco install maven` instalan Maven y configuran el `PATH` automáticamente.
-
-#### macOS / Linux
-
-Lo más simple es usar el gestor de paquetes: `brew install maven` (macOS) o `sudo apt install maven` (Debian/Ubuntu). Si lo instalas a mano desde el zip/tar.gz, agrega esto a `~/.zshrc` o `~/.bashrc` y abre una terminal nueva:
-
-```bash
-export JAVA_HOME=/ruta/al/jdk-17
-export MAVEN_HOME=/opt/apache-maven-3.9.9
-export PATH="$MAVEN_HOME/bin:$JAVA_HOME/bin:$PATH"
-```
+| Contenedor | Qué es | Puerto |
+|------------|--------|--------|
+| `duoc-connect-db` | PostgreSQL 16 | `5433` en tu equipo |
+| `duoc-connect-api` | Backend Spring Boot (Java 17) | `8080` |
+| `duoc-connect-web` | Frontend React servido por nginx | `5173` |
 
 ## Levantar el proyecto
 
-### 0. Configuración (`.env` y `.env.local`)
+1. Abre **Docker Desktop** y espera a que diga que el motor está corriendo.
+2. Clona el repo y entra a la carpeta:
 
-Toda la configuración vive en el archivo **`.env` de la raíz, que viene en el repo** con valores que funcionan tal cual. Lo leen **Docker Compose y el backend** (`mvn spring-boot:run` en perfil `dev`), así que no hay que exportar variables a mano ni crear nada para empezar.
+   ```bash
+   git clone https://github.com/dylannmorales/Proyecto-Duoc-Connect.git
+   cd Proyecto-Duoc-Connect
+   ```
 
-- Por defecto la BD de Docker se publica en el puerto **5433**, así no choca con un PostgreSQL instalado en el equipo.
-- Por defecto S3 está **desactivado** (`AWS_S3_ENABLED=false`) y los PDF se guardan en disco.
+3. *(Opcional)* Para guardar los PDF de apuntes en AWS S3, crea el archivo `.env.local` (ver [Configuración](#configuración-env-y-envlocal)). Sin él, el proyecto funciona igual y los PDF se guardan en un volumen de Docker.
+4. Levanta todo:
 
-**Para activar S3** (o cualquier valor secreto) usa un archivo **`.env.local`** en la raíz. Está en `.gitignore`, así que nunca se sube, y sus valores pisan a los del `.env`:
+   ```bash
+   docker compose up -d --build
+   ```
+
+   La primera vez tarda unos minutos: descarga las imágenes y compila el backend y el frontend (necesita internet). Flyway crea las tablas y carga los catálogos, y se crea el [usuario administrador de demo](#usuario-administrador-demo).
+5. Abre **http://localhost:5173**.
+
+Para comprobar que todo está arriba:
+
+```bash
+docker compose ps
+```
+
+Los tres contenedores deben aparecer como `running` (la BD además como `healthy`).
+
+### Uso diario
+
+| Acción | Comando |
+|--------|---------|
+| Levantar (después de la primera vez) | `docker compose up -d` |
+| Detener (los datos se conservan) | `docker compose down` |
+| Recompilar después de cambiar código o hacer `git pull` | `docker compose up -d --build` |
+| Ver los logs del backend | `docker compose logs -f backend` |
+| Comprobar que S3 está activo | `docker compose logs backend \| grep S3` |
+
+### Configuración (`.env` y `.env.local`)
+
+La configuración vive en el archivo **`.env` de la raíz, que viene en el repo** con valores que funcionan tal cual: no hay que crear ni exportar nada para empezar.
+
+- La BD se publica en el puerto **5433** de tu equipo, así no choca con un PostgreSQL que ya tengas instalado.
+- S3 viene **desactivado** (`AWS_S3_ENABLED=false`).
+
+**Para activar S3** (o cambiar cualquier valor sin tocar el repo) crea un archivo **`.env.local`** en la raíz. Está en `.gitignore`, así que nunca se sube, y sus valores pisan a los del `.env`:
 
 ```ini
 AWS_S3_ENABLED=true
@@ -121,61 +116,7 @@ AWS_ACCESS_KEY_ID=<access-key>
 AWS_SECRET_ACCESS_KEY=<secret>
 ```
 
-Pide las claves al equipo. ⚠️ **No pongas claves reales en `.env`**: ese archivo se sube a GitHub, el repo es público y AWS bloquea automáticamente las claves que encuentra publicadas.
-
-Después elige una forma de levantarlo:
-
-- **Opción A, todo con Docker** (lo más simple): un solo comando. Ver [Ejecutar todo con Docker](#ejecutar-todo-con-docker).
-- **Opción B, modo desarrollo** (con recarga del frontend): los tres pasos siguientes, cada uno en su propia terminal.
-
-### 1. Base de datos
-
-Abre Docker Desktop y espera a que el motor esté activo. Luego, desde la raíz del repo:
-
-```bash
-docker compose up -d postgres
-```
-
-Comprueba que esté sano:
-
-```bash
-docker ps
-```
-
-Debe aparecer `duoc-connect-db` con estado `healthy`.
-
-> **¿Ya tienes PostgreSQL instalado en tu máquina?** Si algo más ocupa el puerto 5432, el backend se conectará a ese servidor y fallará con `la autentificación password falló para el usuario "duoc"`. Revisa el puerto:
->
-> ```powershell
-> Get-NetTCPConnection -LocalPort 5432 -State Listen
-> ```
->
-> El `.env` ya publica la BD de Docker en el **5433** para evitar ese choque; ver [Puerto 5432 ocupado](#puerto-5432-ocupado).
-
-### 2. Backend
-
-```bash
-cd backend
-mvn spring-boot:run
-```
-
-No hace falta definir variables: el backend lee el `.env` y el `.env.local` de la raíz. Está listo cuando responde:
-
-```bash
-curl http://localhost:8080/api/v1/status
-```
-
-En el primer arranque Flyway crea las tablas y carga los catálogos (carreras y sedes). Si S3 está activo, el log muestra `PDF de apuntes en S3: bucket=duoc-connect`.
-
-### 3. Frontend
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-Abre http://localhost:5173.
+Pide las claves al equipo y vuelve a ejecutar `docker compose up -d` para que el backend las tome. ⚠️ **No pongas claves reales en `.env`**: ese archivo se sube a GitHub, el repo es público y AWS bloquea automáticamente las claves que encuentra publicadas.
 
 ## URLs
 
@@ -291,7 +232,7 @@ En `prod` no hay valores por defecto: si falta `ADMIN_PASSWORD` no se crea el ad
 
 ## Variables de entorno
 
-Van en el `.env` de la raíz (versionado) y, las secretas, en `.env.local` (no versionado, pisa al `.env`); ver [Configuración](#0-configuración-env-y-envlocal). Las variables de entorno del sistema tienen prioridad sobre ambos archivos. Las más importantes (valor del `.env`):
+Van en el `.env` de la raíz (versionado) y, las secretas, en `.env.local` (no versionado, pisa al `.env`); ver [Configuración](#configuración-env-y-envlocal). Las variables de entorno del sistema tienen prioridad sobre ambos archivos. Las más importantes (valor del `.env`):
 
 | Variable | Descripción | Valor por defecto |
 |----------|-------------|-------------------|
@@ -314,7 +255,7 @@ Van en el `.env` de la raíz (versionado) y, las secretas, en `.env.local` (no v
 
 ## PDF de apuntes en AWS S3 (capa gratuita)
 
-El proyecto usa el bucket privado **`duoc-connect`** en **`us-east-2` (Ohio)**. Para que funcione en tu equipo basta con un `.env.local` con las claves (ver [paso 0](#0-configuración-env-y-envlocal)); los pasos de esta sección solo hacen falta para crear un bucket propio.
+El proyecto usa el bucket privado **`duoc-connect`** en **`us-east-2` (Ohio)**. Para que funcione en tu equipo basta con un `.env.local` con las claves (ver [Configuración](#configuración-env-y-envlocal)); los pasos de esta sección solo hacen falta para crear un bucket propio.
 
 Sin S3, los PDF se guardan en disco. Con S3 activo, los **PDF de apuntes** se suben a un bucket privado; las fotos de perfil y las imágenes del foro siguen en disco. La descarga pasa por el backend (`GET /api/v1/apuntes/{id}/descargar`), así que el bucket nunca queda público y se mantiene el control de acceso de la app. Los apuntes subidos antes de activar S3 se siguen descargando desde disco.
 
@@ -356,7 +297,7 @@ AWS_ACCESS_KEY_ID=<access-key>
 AWS_SECRET_ACCESS_KEY=<secret>
 ```
 
-Sirve igual para `mvn spring-boot:run` y para `docker compose`. Si no pones las claves en `.env.local`, el backend (con `mvn`) las busca en `~/.aws/credentials`. Al arrancar, el log muestra `S3: usando las claves...` y `PDF de apuntes en S3: bucket=duoc-connect`. Sube un apunte y verifícalo en la consola de S3, dentro de `apuntes/`.
+Luego ejecuta `docker compose up -d` para que el backend tome los valores. En `docker compose logs backend` deben aparecer `S3: usando las claves...` y `PDF de apuntes en S3: bucket=duoc-connect`. Sube un apunte y verifícalo en la consola de S3, dentro de `apuntes/`.
 
 ### Mantenerse en la capa gratuita
 
@@ -365,11 +306,9 @@ Sirve igual para `mvn spring-boot:run` y para `docker compose`. Si no pones las 
 
 ## Solución de problemas
 
-### Puerto 5432 ocupado
+### Puerto 5433 ocupado
 
-Pasa cuando tienes PostgreSQL instalado directamente en tu equipo. Por eso el `.env` ya publica la BD de Docker en el **5433** (`POSTGRES_PORT=5433`) y el backend en modo desarrollo se conecta ahí (`SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5433/duoc_connect`). Si prefieres otro puerto, cambia ambos valores en `.env.local`.
-
-En el modo todo-Docker el puerto da igual: el backend se conecta a la BD por la red interna de Docker.
+Si algo más usa el 5433 en tu equipo, cambia el puerto publicado de la BD en `.env.local` (por ejemplo `POSTGRES_PORT=5434`) y vuelve a ejecutar `docker compose up -d`. Dentro de Docker el backend se conecta a la BD por la red interna, así que no hay que cambiar nada más.
 
 ### Docker: "failed to connect to the docker API"
 
@@ -377,7 +316,7 @@ Docker Desktop no está iniciado. Ábrelo y espera a que el motor esté activo a
 
 ### El puerto 8080 o 5173 ya está en uso
 
-Cierra el proceso que lo ocupa o cambia el puerto: `server.port` en `backend/src/main/resources/application.yml` y `server.port` en `frontend/vite.config.ts`.
+Cierra el programa que lo ocupa (por ejemplo, un `mvn spring-boot:run` o `npm run dev` que quedó abierto) o cambia el puerto publicado en la sección `ports` de `docker-compose.yml` (el número de la izquierda).
 
 ### Reiniciar la base de datos desde cero
 
@@ -385,23 +324,7 @@ Esto **borra todos los datos**:
 
 ```bash
 docker compose down -v
-docker compose up -d postgres
-```
-
-## Ejecutar todo con Docker
-
-Solo necesitas Docker Desktop abierto (no hace falta instalar Java, Maven, Node ni PostgreSQL). Desde la raíz del repo:
-
-```bash
-docker compose up -d --build
-```
-
-Levanta PostgreSQL, el backend (puerto 8080, con S3 si `.env.local` lo activa) y el frontend servido por nginx (http://localhost:5173). Las siguientes veces basta con `docker compose up -d`; para detenerlo, `docker compose down` (los datos se conservan).
-
-Para comprobar que S3 quedó activo:
-
-```bash
-docker logs duoc-connect-api | grep S3
+docker compose up -d
 ```
 
 ## Estructura del proyecto
@@ -430,11 +353,27 @@ duoc-connect/
 
 ## Comandos útiles
 
+| Comando | Qué hace |
+|---------|----------|
+| `docker compose up -d --build` | Compila y levanta todo |
+| `docker compose down` | Detiene todo (conserva los datos) |
+| `docker compose logs -f backend` | Muestra los logs del backend |
+| `docker run --rm -v "${PWD}/backend:/app" -w /app maven:3.9-eclipse-temurin-17 mvn test` | Ejecuta las 135 pruebas del backend sin instalar Java ni Maven (desde la raíz del repo; el reporte de cobertura queda en `backend/target/site/jacoco/index.html`) |
+
+## Desarrollo sin Docker (opcional)
+
+Solo si quieres ejecutar el backend o el frontend fuera de Docker, por ejemplo para depurar o tener recarga automática del frontend. Necesitas **JDK 17+**, **Maven 3.9+** y **Node.js 20+** instalados. La BD sigue corriendo en Docker:
+
+```bash
+docker compose up -d postgres
+```
+
 | Comando | Dónde | Qué hace |
 |---------|-------|----------|
-| `mvn spring-boot:run` | `backend/` | Inicia la API |
+| `mvn spring-boot:run` | `backend/` | Inicia la API (lee `.env` y `.env.local` de la raíz) |
 | `mvn test` | `backend/` | Ejecuta las 135 pruebas unitarias y genera el reporte de cobertura en `target/site/jacoco/index.html` (68,6 % de líneas) |
-| `mvn -DskipTests package` | `backend/` | Genera el JAR |
-| `npm run dev` | `frontend/` | Servidor de desarrollo |
+| `npm install` y `npm run dev` | `frontend/` | Servidor de desarrollo con recarga en http://localhost:5173 |
 | `npm run build` | `frontend/` | Chequea tipos y compila |
 | `npm run lint` | `frontend/` | Revisa el código con ESLint |
+
+Antes de levantar el backend o el frontend así, detén sus contenedores para liberar los puertos: `docker compose stop backend frontend`.
